@@ -14,9 +14,9 @@ import (
 
 const (
 	// AppName is the name of the application
-	AppName = "xecctl"
+	AppName = "butler"
 	// ConfigFileNameWithoutExtension is the name of the config file
-	ConfigFileNameWithoutExtension = ".xec"
+	ConfigFileNameWithoutExtension = ".butler"
 )
 
 var (
@@ -30,8 +30,8 @@ var (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "xec [OPTIONS] <alias>",
-	Short: "Chore finisher.",
+	Use:   "butler [OPTIONS] <alias>",
+	Short: "Task finisher.",
 	Long:  ``,
 
 	Run: func(cmd *cobra.Command, args []string) {
@@ -86,7 +86,7 @@ func init() {
 		fmt.Printf("Config in indented JSON:\n %s\n", string(CJSON))
 	}
 
-	for _, v := range C.Chores {
+	for _, v := range C.Tasks {
 		fmt.Printf("%v", v)
 	}
 }

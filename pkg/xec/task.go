@@ -64,7 +64,7 @@ func (t Task) SetEnvironment() {
 	}
 
 	// Traverse the configured environment values and add them to the list.
-	for _, envKeyValue := range c.Environment.Values {
+	for _, envKeyValue := range t.Environment.Values {
 		environmentValuesConfig = append(environmentValuesConfig, envKeyValue)
 	}
 	environmentValuesToBeFedToProcess = append(environmentValuesToBeFedToProcess, environmentValuesConfig...)

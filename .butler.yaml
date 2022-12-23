@@ -1,4 +1,4 @@
-verbose: true
+# yaml-language-server: $schema=schema/butler-yaml-schema.json
 debug: true
 logFile: "xec.log"
 environment:
@@ -16,6 +16,7 @@ tasks:
     cmd: printenv
     wait: true # false will cause xec spawn another process
     retry: 3
+    weight: 10
   - alias: myls
     description: list files in this directory
     cmd: ls

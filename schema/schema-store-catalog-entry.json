@@ -1,0 +1,8 @@
+{
+    "name": "Butler",
+    "description": "Butler Tasks Configuration",
+    "url": "https://raw.githubusercontent.com/leventogut/butler/main/schema/butler-tasks-yaml-schema.json",
+    "fileMatch": [
+        ".butler-tasks/yaml"
+    ]
+}

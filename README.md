@@ -8,60 +8,27 @@
 
 Looks for ./.xec.(yaml|yml) if not found it traverses up to /
 
-## Base example
+## Examples
+
+### 
 
 ```yaml
-build:
-
-```
-
-## Multiline example
-
-```yaml
-docker-build-release:
-  - check-docs
-  - |+  
-  docker build \
-      -f deploy/skaffold/Dockerfile.lts \
-      --target release \
-      -t gcr.io/$(GCP_PROJECT)/skaffold:edge-lts \
-      -t gcr.io/$(GCP_PROJECT)/skaffold:$(COMMIT)-lts \
-      .
-```
-
-## Example project YAML
-
-```yaml
-# examples/.xec.yaml
-myTask:
-cmd: "ls -alH"
-read:
-env:
-- key: filename
-    value: README.md
-pre-cmd: ls -al README.md
-cmd: cat ${filename}
-```
-
-```yaml
-# ~/dev/org/simple/.xec.yaml
+verbose: true
+debug: true
+logFile: "xec.log"
+environment:
+  values:
+    - key=value
+    - environment=dev
+  passOn: true
+  acceptFilterRegex:
+    - "XEC_*"
+  rejectFilterRegex:
+    - "*SECRET*"
 tasks:
-  one: echo "one"
-  two: echo "two"
-  three: echo "three"
-```
-
-```shell
-xec add task myTask -- "ls -alH"
-```
-
-```shell
-xec MyTask
-```
-
-
-## Example root YAML
-
-```yaml
-
+  - alias: printenv
+    description: execute printenv, usuallu for debugging.
+    cmd: printenv
+    wait: true # false will cause xec spawn another process
+    retry: 3
 ```
