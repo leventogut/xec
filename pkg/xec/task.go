@@ -42,6 +42,7 @@ func (t Task) SetEnvironment() {
 	var environmentValuesConfig []string
 
 	// Traverse the environment values we have and apply the accept filters.
+
 	for _, envKeyValue := range os.Environ() {
 		if t.Environment.AcceptFilterRegex != nil {
 			for _, regex := range t.Environment.AcceptFilterRegex {
@@ -64,7 +65,8 @@ func (t Task) SetEnvironment() {
 	}
 
 	// Traverse the configured environment values and add them to the list.
-	for _, envKeyValue := range t.Environment.Values {
+	for _, envKeyValueMap := range t.Environment.Values {
+		envKeyValue := ConvertEnvMapToEnvString(envKeyValueMap)
 		environmentValuesConfig = append(environmentValuesConfig, envKeyValue)
 	}
 	environmentValuesToBeFedToProcess = append(environmentValuesToBeFedToProcess, environmentValuesConfig...)

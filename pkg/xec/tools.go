@@ -1,6 +1,7 @@
 package xec
 
 import (
+	"fmt"
 	"log"
 	"regexp"
 )
@@ -17,4 +18,12 @@ func CheckRegex(stringInput, pattern string) bool {
 	} else {
 		return false
 	}
+}
+
+// ConvertEnvMapToEnvString converts a map[string]string into key=value format.
+func ConvertEnvMapToEnvString(kvm map[string]string) string {
+	for k, v := range kvm {
+		return fmt.Sprintf("%s=%s", k, v)
+	}
+	return ""
 }
