@@ -149,7 +149,7 @@ func (o output) Output(message string, outputType string, writers ...[]io.Writer
 func (o output) write(s string) (n int, err error) {
 	for _, writer := range o.writers {
 		// fmt.Printf("writer: %v", writer)
-		now := time.Now().Format(time.RFC3339Nano)
+		now := time.Now().Format(time.RFC3339)
 		_, err = o.color.Fprintf(writer, now+" | "+s+"\n")
 		if err != nil {
 			fmt.Printf("err: %v", err)

@@ -32,7 +32,9 @@ var (
 	NoColor bool   = false
 	LogFile string = AppName + ".log"
 	Quiet          = false
-	Log            = output.NewOutput(NoColor, LogFile, Quiet, Debug)
+	// TODO import from outpiut package and set the values accordingly with set functions.
+	l = output.Log
+	// Log = output.NewOutput(NoColor, LogFile, Quiet, Debug)
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -51,7 +53,7 @@ var rootCmd = &cobra.Command{
 func Execute() {
 	var err error
 	for _, t := range C.Tasks {
-		Log.Info(fmt.Sprintf("%s\t%s\t%s\t%s", t.Alias, t.Description, t.Cmd, t.Args))
+		l.Info(fmt.Sprintf("%s\t%s\t%s\t%s", t.Alias, t.Description, t.Cmd, t.Args))
 		rootCmd.AddCommand(&cobra.Command{
 			Use:   t.Alias,
 			Short: t.Description,
@@ -107,7 +109,7 @@ func initConfig() {
 		if err != nil {
 			log.Fatalf(err.Error())
 		}
-		fmt.Printf("Config in indented JSON:\n %s\n", string(CJSON))
+		l.Debug(fmt.Sprintf("Config in indented JSON:\n %s\n", string(CJSON)))
 	}
 
 	// if Verbose {
@@ -115,6 +117,6 @@ func initConfig() {
 	// }
 	if Debug {
 		//fmt.Printf("Debug enabled\n")
-		Log.Debug("Debug enabled")
+		l.Debug("Debug enabled")
 	}
 }
