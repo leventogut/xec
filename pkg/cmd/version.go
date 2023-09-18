@@ -15,6 +15,6 @@ var versionCmd = &cobra.Command{
 	Short: "Print the version number",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Butler a simple executor")
+		fmt.Println("Xec a simple executor")
 	},
 }

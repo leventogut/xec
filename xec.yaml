@@ -1,0 +1,66 @@
+# # yaml-language-server: $schema=schema/butler-yaml-schema.json
+taskDefaults:
+  debug: true
+  logFile: "xec.log"
+  context: "" # root context i.e. xec <context> <task_name>, when empty xec <task_name>
+  environment:
+    values:
+      defaultKey: defaultValue
+      environment: dev
+    passOn: true
+    acceptFilterRegex:
+      - "XEC_*"
+    rejectFilterRegex:
+      - "*SECRET*"
+tasks:
+  - alias: printenv
+    description: execute printenv, usually for debugging.
+    context: "debug" # debug context i.e. butler debug printenv
+    cmd: printenv
+  - alias: ls
+    description: list files
+    cmd: ls
+    args:
+      - "-al"
+    # wait: true # false will cause xec spawn another process
+    # retry: 3
+    # weight: 10
+  # - alias: myls
+  #   description: list files in this directory
+  #   cmd: ls
+  #   args:
+  #     - "-al"
+  #     - "/" # '${DIRECTORY}'
+  #   labels:
+  #     - tools
+  #   tags:
+  #     instance: test
+  #     tool: ls
+  #   environment:
+  #     passOn: true
+  #     values:
+  #       key: value
+  #       environment: prod
+  #   acceptFilterRegex:
+  #     - "XEC_*"
+  #   rejectFilterRegex:
+  #     - "*SECRET*"
+  #     - "AWS*"
+  #   debug: true
+  #   logFile: "myls.log"
+  # - alias: link-aws
+  #   link: ~/dev/tasks/aws/aws.sh
+  # - context: ltasks # Local tasks # usage $0 <context_name> <EXECUTABLE_NAME>
+  #   link: ~/dev/tasks/*
+# taskLists:
+#   - name: build-pipeline
+#     context: build
+#     description: "Build pipeline"
+#     tasks:
+#       - printenv
+#       - build
+#       - publish
+#   - name: aws
+#     context: aws
+#     description: "AWS Skills"
+#     import: git@github.com:leventogut/butler/skills/aws.yaml # TODO: fix the url example

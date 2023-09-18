@@ -1,8 +1,11 @@
 {
-    "name": "Butler",
-    "description": "Butler Tasks Configuration",
-    "url": "https://raw.githubusercontent.com/leventogut/butler/main/schema/butler-tasks-yaml-schema.json",
+    "name": "Xec",
+    "description": "Xec Tasks Configuration",
+    "url": "https://raw.githubusercontent.com/leventogut/xec/main/schema/xec-tasks-yaml-schema.json",
     "fileMatch": [
-        ".butler-tasks/yaml"
+        ".xec.yaml",
+        ".xec.yml",
+        "xec.yaml",
+        "xec.yml"
     ]
 }

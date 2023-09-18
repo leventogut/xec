@@ -6,11 +6,11 @@
 - Reads .env by default.
 - Can import other `.xec.yaml` files
 
-Looks for ./.xec.(yaml|yml) if not found it traverses up to /
+Looks for a file named xec.[yaml|yml] in either current directory or $HOME.
 
 ## Examples
 
-### 
+###
 
 ```yaml
 verbose: true
@@ -32,3 +32,7 @@ tasks:
     wait: true # false will cause xec spawn another process
     retry: 3
 ```
+
+## Skills
+
+Skills are pack of aliases for a specific function.

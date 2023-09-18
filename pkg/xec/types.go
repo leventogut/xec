@@ -8,7 +8,7 @@ import (
 // Config represents the configuration read from file or env values.
 type Config struct {
 	TaskDefaults TaskDefaults `yaml:"taskDefaults" json:"taskDefaults"`
-	Tasks        []Task       `yaml:"tasks" json:"tasks"`
+	Tasks        []*Task      `yaml:"tasks" json:"tasks"`
 	TaskLists    []TaskList   `yaml:"taskLists" json:"taskLists"`
 }
 
