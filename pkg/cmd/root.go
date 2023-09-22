@@ -16,7 +16,7 @@ const (
 	// AppName is the name of the application
 	AppName = "xec"
 	// ConfigFileNameWithoutExtension is the name of the config file
-	ConfigFileNameWithoutExtension = "xec"
+	ConfigFileNameWithoutExtension = ".xec"
 )
 
 var (
