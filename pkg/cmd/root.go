@@ -41,7 +41,6 @@ var (
 var rootCmd = &cobra.Command{
 	Use:   "xec [OPTIONS] <alias>",
 	Short: "Task executor.",
-	Long:  ``,
 
 	Run: func(cmd *cobra.Command, args []string) {
 
@@ -52,18 +51,18 @@ var rootCmd = &cobra.Command{
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	var err error
-	for _, t := range C.Tasks {
-		l.Info(fmt.Sprintf("%s\t%s\t%s\t%s", t.Alias, t.Description, t.Cmd, t.Args))
+	for _, tInstance := range C.Tasks {
+		t := tInstance
+		fmt.Printf("%s\t\t%s\t%s\t%s\n", t.Alias, t.Description, t.Cmd, t.Args)
 		rootCmd.AddCommand(&cobra.Command{
-			Use:   t.Alias,
-			Short: t.Description,
-			Long:  t.Description,
+			Use:                t.Alias,
+			Short:              t.Description,
+			DisableFlagParsing: true,
 			Run: func(cmd *cobra.Command, args []string) {
-				xec.ExecuteWithTask(&t)
+				xec.ExecuteWithTask(&t, args)
 			},
 		})
 	}
-
 	err = rootCmd.Execute()
 	if err != nil {
 		fmt.Println(err)
@@ -74,14 +73,13 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 	// Global flags:
-	rootCmd.PersistentFlags().StringVar(&configFile, "config", "", "config file (default is $PWD/.xec.yaml)")
-	rootCmd.PersistentFlags().BoolVar(&NoColor, "nocolor", true, "Color output. (Default is true i.e. color enabled)")
-	rootCmd.PersistentFlags().BoolVar(&Verbose, "verbose", true, "Verbose level output.  (Default is true i.e. verbose output enabled)")
-	rootCmd.PersistentFlags().BoolVar(&Debug, "debug", false, "Debug level output.  (Default is true i.e. debug output enabled)")
-	rootCmd.PersistentFlags().StringVar(&LogFile, "Logfile", "", "Filename to use for logging.")
+	rootCmd.PersistentFlags().StringVar(&configFile, "config", "", "config file (default is ~/.xec.yaml and $PWD/.xec.yaml)")
+	rootCmd.PersistentFlags().BoolVar(&NoColor, "nocolor", true, "Disable color output. (Default is true i.e. color enabled.)")
+	rootCmd.PersistentFlags().BoolVar(&Verbose, "verbose", true, "Verbose level output.  (Default is true i.e. verbose output enabled.)")
+	rootCmd.PersistentFlags().BoolVar(&Debug, "debug", false, "Debug level output.  (Default is true i.e. debug output enabled.)")
+	rootCmd.PersistentFlags().BoolVar(&Quiet, "quiet", false, "No output.  (Default is false i.e. not quiet.)")
+	rootCmd.PersistentFlags().StringVar(&LogFile, "logfile", "", "Filename to use for logging.")
 
-	// Local flags (bare root command):
-	// rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 	initConfig()
 }
 

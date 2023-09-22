@@ -1,4 +1,4 @@
-# # yaml-language-server: $schema=schema/butler-yaml-schema.json
+# yaml-language-server: $schema=schema/xec-yaml-schema.json
 taskDefaults:
   debug: true
   logFile: "xec.log"
@@ -15,7 +15,7 @@ taskDefaults:
 tasks:
   - alias: printenv
     description: execute printenv, usually for debugging.
-    context: "debug" # debug context i.e. butler debug printenv
+    # context: "debug" # debug context i.e. xec debug printenv
     cmd: printenv
   - alias: ls
     description: list files

@@ -11,7 +11,7 @@
 xec
 main
 
-xec-*
+bin
 **/*.log
 
 # Output of the go coverage tool, specifically when used with LiteIDE

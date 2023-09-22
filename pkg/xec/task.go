@@ -42,22 +42,23 @@ func (t *Task) Execute() {
 }
 
 // Execute starts the defined command with it;s arguemnts.
-func ExecuteWithTask(taskPointerAddress **Task) {
-	l.Debug("ddd")
+func ExecuteWithTask(taskPointerAddress **Task, args []string) {
 	t := *taskPointerAddress
-	// fmt.Println("In ExecuteWithTask")
-	// fmt.Printf("address in main: %p\n", t)
-	// fmt.Printf("%+v", t)
-	// fmt.Printf("Executing: %s\n", t.Cmd)
 	var cancel context.CancelFunc
 	if t.Timeout == 0 {
 		t.Timeout = DefaultTimeout
+		l.Debug(fmt.Sprintf("Default timeout not set, using default timout: %v", DefaultTimeout))
 	}
 	t.Status.ExecContext, cancel = context.WithTimeout(context.Background(), time.Duration(t.Timeout)*time.Second)
 	defer cancel()
-	t.Status.ExecCmd = exec.CommandContext(t.Status.ExecContext, t.Cmd, t.Args...)
+	// Merge args from config and user entered
+	for _, a := range t.Args {
+		args = append(args, a)
+	}
+	t.Status.ExecCmd = exec.CommandContext(t.Status.ExecContext, t.Cmd, args...)
 	t.SetEnvironment()
 
+	// TODO if quiet flag is set do not log to console.
 	t.Status.ExecCmd.Stdin = os.Stdin
 	t.Status.ExecCmd.Stdout = os.Stdout
 	t.Status.ExecCmd.Stderr = os.Stderr
@@ -65,11 +66,7 @@ func ExecuteWithTask(taskPointerAddress **Task) {
 		log.Fatal(err)
 	}
 
-	l.Debug(fmt.Sprintf("t.Status.ExecCmd.ProcessState.ExitCode(): %v\n", t.Status.ExecCmd.ProcessState.ExitCode()))
-	l.Debug(fmt.Sprintf("t.Status.ExecCmd.ProcessState.Pid(): %v\n", t.Status.ExecCmd.ProcessState.Pid()))
-	// fmt.Printf("t.Status.ExecCmd.ProcessState.SysUsage(): %v\n", t.Status.ExecCmd.ProcessState.SysUsage())
-	// fmt.Printf("t.Status.ExecCmd.Stdout: %v\n", t.Status.ExecCmd.Stdout)
-	// fmt.Printf("t.Status.ExecCmd.Stderr: %v\n", t.Status.ExecCmd.Stderr)
+	l.Debug(fmt.Sprintf("PID: %v, ExitCode: %v\n", t.Status.ExecCmd.ProcessState.Pid(), t.Status.ExecCmd.ProcessState.ExitCode()))
 }
 
 // SetEnvironment prepares the environment values using pre-defined rules based on regex in the configuration.
