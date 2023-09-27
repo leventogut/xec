@@ -1,66 +1,44 @@
-# yaml-language-server: $schema=https://raw.githubusercontent.com/leventogut/xec/main/schema/xec-yaml-schema.json
+# yaml-language-server: $schema=schema/xec-yaml-schema.json
+# # yaml-language-server: $schema=https://raw.githubusercontent.com/leventogut/xec/main/schema/xec-yaml-schema.json
 taskDefaults:
   debug: true
-  logFile: "xec.log"
-  context: "" # root context i.e. xec <context> <task_name>, when empty xec <task_name>
+  logfile: "xec.log"
   environment:
     values:
-      defaultKey: defaultValue
-      environment: dev
-    passOn: true
+      - defaultKey: defaultValue
+      - environment: dev
+    passOn: false
     acceptFilterRegex:
       - "XEC_*"
     rejectFilterRegex:
-      - "*SECRET*"
+      - "SECRET*"
+    ignoreError: true
 tasks:
   - alias: printenv
     description: execute printenv, usually for debugging.
-    # context: "debug" # debug context i.e. xec debug printenv
     cmd: printenv
+    environment:
+      values:
+        - task: printenv
+        - environment2: dev2
   - alias: ls
-    description: list files
+    description: list all files, long format, size units
     cmd: ls
     args:
       - "-al"
-    # wait: true # false will cause xec spawn another process
-    # retry: 3
-    # weight: 10
-  # - alias: myls
-  #   description: list files in this directory
-  #   cmd: ls
-  #   args:
-  #     - "-al"
-  #     - "/" # '${DIRECTORY}'
-  #   labels:
-  #     - tools
-  #   tags:
-  #     instance: test
-  #     tool: ls
-  #   environment:
-  #     passOn: true
-  #     values:
-  #       key: value
-  #       environment: prod
-  #   acceptFilterRegex:
-  #     - "XEC_*"
-  #   rejectFilterRegex:
-  #     - "*SECRET*"
-  #     - "AWS*"
-  #   debug: true
-  #   logFile: "myls.log"
-  # - alias: link-aws
-  #   link: ~/dev/tasks/aws/aws.sh
-  # - context: ltasks # Local tasks # usage $0 <context_name> <EXECUTABLE_NAME>
-  #   link: ~/dev/tasks/*
-# taskLists:
-#   - name: build-pipeline
-#     context: build
-#     description: "Build pipeline"
-#     tasks:
-#       - printenv
-#       - build
-#       - publish
-#   - name: aws
-#     context: aws
-#     description: "AWS Skills"
-#     import: git@github.com:leventogut/butler/skills/aws.yaml # TODO: fix the url example
+      # - "-h"
+  - alias: lsz
+    description: ls to give error.
+    cmd: ls
+    args:
+      - "-z"
+    environment:
+      values:
+        - task: printenv
+        - environment2: dev2
+taskLists:
+  - alias: lsenv
+    description: "tasklist for ls and env"
+    taskNames:
+      - ls
+      - printenv

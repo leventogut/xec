@@ -4,8 +4,6 @@
     "url": "https://raw.githubusercontent.com/leventogut/xec/main/schema/xec-tasks-yaml-schema.json",
     "fileMatch": [
         ".xec.yaml",
-        ".xec.yml",
-        "xec.yaml",
-        "xec.yml"
+        ".xec.yml"
     ]
 }

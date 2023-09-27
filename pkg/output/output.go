@@ -12,12 +12,18 @@ import (
 )
 
 type Output interface {
-	NoColor() bool
-	SetNoColor(nc bool)
+	NoColorFlag() bool
+	SetNoColorFlag(b bool)
 	LogFile() string
 	SetLogFile(f string)
-	Quiet() bool
-	SetQuiet(q bool)
+	QuietFlag() bool
+	SetQuietFlag(b bool)
+	DevFlag() bool
+	SetDevFlag(b bool)
+	DebugFlag() bool
+	SetDebugFlag(b bool)
+	VerboseFlag() bool
+	SetVerboseFlag(b bool)
 }
 type output struct {
 	noColor bool
@@ -26,77 +32,107 @@ type output struct {
 	quiet   bool
 	debug   bool
 	color   *color.Color
+	dev     bool
+	verbose bool
 }
 
 var (
-	Log *output
+	L      *output
+	prefix string
 )
 
 func init() {
-	Log = NewOutput(false, "xec.log", false, true)
+	L = NewOutput(false, "", false, false, false, false)
+	// L = new(output)
+	L.SetNoColorFlag(false)
+	L.SetDebugFlag(false)
+	L.SetDevFlag(false)
+	L.SetLogFileFlag("")
+	L.SetQuietFlag(false)
+	L.SetVerboseFlag(false)
 }
 
-func NewOutput(noColor bool, logFile string, quiet bool, debug bool) *output {
+func NewOutput(noColor bool, logFile string, quiet bool, debug bool, dev bool, verbose bool) *output {
+	log.Println("output initialized")
 	return &output{
 		noColor: noColor,
 		logFile: logFile,
 		quiet:   quiet,
 		debug:   debug,
+		dev:     dev,
+		verbose: verbose,
 	}
 }
 
-func (o output) NoColor() bool {
+func (o *output) NoColorFlag() bool {
 	return o.noColor
 }
-func (o output) SetNoColor(nc bool) {
-	o.noColor = nc
+func (o *output) SetNoColorFlag(b bool) {
+	o.noColor = b
 }
-func (o output) LogFile() string {
+func (o *output) LogFileFlag() string {
 	return o.logFile
 }
-func (o output) SetLogFile(f string) {
-	fmt.Println("Setting logFile")
+func (o *output) SetLogFileFlag(f string) {
 	o.logFile = f
 }
-func (o output) Quiet() bool {
+func (o *output) QuietFlag() bool {
 	return o.quiet
 }
-func (o output) SetQuiet(q bool) {
-	o.quiet = q
+func (o *output) SetQuietFlag(b bool) {
+	o.quiet = b
+}
+func (o *output) DevFlag() bool {
+	return o.dev
+}
+func (o *output) SetDevFlag(b bool) {
+	o.dev = b
 }
 
-func (o output) Debug(m string) {
+func (o *output) DebugFlag() bool {
+	return o.debug
+}
+func (o *output) SetDebugFlag(b bool) {
+	o.debug = b
+}
+
+func (o *output) VerboseFlag() bool {
+	return o.verbose
+}
+func (o *output) SetVerboseFlag(b bool) {
+	o.verbose = b
+}
+func (o *output) Dev(m string) {
+	o.Output(m, "dev")
+}
+func (o *output) Debug(m string) {
 	o.Output(m, "debug")
 }
 
-func (o output) Fatal(m string) {
+func (o *output) Fatal(m string) {
 	o.Output(m, "fatal")
 	os.Exit(1)
 }
 
-func (o output) Error(m string) {
+func (o *output) Error(m string) {
 	o.Output(m, "error")
 }
 
-func (o output) Warning(m string) {
+func (o *output) Warning(m string) {
 	o.Output(m, "warning")
 }
 
-func (o output) Info(m string) {
+func (o *output) Info(m string) {
 	o.Output(m, "info")
 }
 
-func (o output) Success(m string) {
+func (o *output) Success(m string) {
 	o.Output(m, "success")
 }
 
-// Usage:
-// o.Output("error", "this is my message", os.Stderr)
-// "this is my output candidate".output("warning")
-
 // Output receives two strings (severity and message and outputs to stdout or
 func (o output) Output(message string, outputType string, writers ...[]io.Writer) {
-	// fmt.Printf("%+v", o)
+	devColor := color.FgHiCyan
 	debugColor := color.FgYellow
 	fatalColor := color.FgRed
 	errorColor := color.FgRed
@@ -105,7 +141,9 @@ func (o output) Output(message string, outputType string, writers ...[]io.Writer
 	successColor := color.FgHiGreen
 	defer color.Unset()
 	color.Unset()
-	if outputType == "debug" {
+	if outputType == "dev" {
+		o.color = color.New(devColor)
+	} else if outputType == "debug" {
 		o.color = color.New(debugColor)
 	} else if outputType == "fatal" {
 		o.color = color.New(fatalColor)
@@ -123,14 +161,26 @@ func (o output) Output(message string, outputType string, writers ...[]io.Writer
 	if o.noColor {
 		o.color.DisableColor()
 	}
+	now := time.Now().Format(time.RFC3339)
 	if !o.quiet {
+		log.Println("not quiet")
 		if outputType == "error" || outputType == "fatal" {
 			o.writers = append(o.writers, os.Stderr)
+		} else if outputType == "debug" && o.debug {
+			o.writers = append(o.writers, os.Stdout)
+			prefix = now + " | "
+		} else if outputType == "info" || outputType == "warning" && o.verbose {
+			o.writers = append(o.writers, os.Stdout)
+		} else if outputType == "dev" && o.dev {
+			o.writers = append(o.writers, os.Stdout)
+			prefix = now + " | "
+		} else if outputType == "success" {
+			o.writers = append(o.writers, os.Stdout)
 		} else {
 			o.writers = append(o.writers, os.Stdout)
+			prefix = "UNDEFINED | "
 		}
 	}
-	// fmt.Printf("o.logFile: %s\n", o.logFile)
 	// Log to file if logFile is set
 	if o.logFile != "" {
 		f, err := os.OpenFile(o.logFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
@@ -148,9 +198,7 @@ func (o output) Output(message string, outputType string, writers ...[]io.Writer
 
 func (o output) write(s string) (n int, err error) {
 	for _, writer := range o.writers {
-		// fmt.Printf("writer: %v", writer)
-		now := time.Now().Format(time.RFC3339)
-		_, err = o.color.Fprintf(writer, now+" | "+s+"\n")
+		_, err = o.color.Fprintf(writer, prefix+s+"\n")
 		if err != nil {
 			fmt.Printf("err: %v", err)
 		}

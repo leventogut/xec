@@ -6,38 +6,48 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
-                "debug": {
-                    "type": "boolean"
-                },
-                "logFile": {
-                    "type": "string"
-                },
-                "environment": {
-                    "$ref": "#/definitions/XecEnvironment"
+                "taskDefaults": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "debug": {
+                            "type": "boolean"
+                        },
+                        "logfile": {
+                            "type": "string"
+                        },
+                        "environment": {
+                            "$ref": "#/definitions/Environment"
+                        },
+                        "ignoreError": {
+                            "type": "boolean"
+                        }
+                    }
                 },
                 "tasks": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/Task"
                     }
+                },
+                "taskLists": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/TaskList"
+                    }
                 }
             },
-            "required": [
-                "debug",
-                "environment",
-                "logFile",
-                "tasks"
-            ],
+            "required": [],
             "title": "Xec"
         },
-        "XecEnvironment": {
+        "Environment": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
                 "values": {
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "type": "object"
                     }
                 },
                 "passOn": {
@@ -56,13 +66,8 @@
                     }
                 }
             },
-            "required": [
-                "acceptFilterRegex",
-                "passOn",
-                "rejectFilterRegex",
-                "values"
-            ],
-            "title": "ButlerEnvironment"
+            "required": [],
+            "title": "Environment"
         },
         "Task": {
             "type": "object",
@@ -77,29 +82,14 @@
                 "cmd": {
                     "type": "string"
                 },
-                "wait": {
-                    "type": "boolean"
-                },
-                "retry": {
-                    "type": "integer"
-                },
-                "weight": {
-                    "type": "integer"
-                },
                 "args": {
                     "type": "array",
                     "items": {
                         "type": "string"
                     }
                 },
-                "labels": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "tags": {
-                    "$ref": "#/definitions/Tags"
+                "ignoreError": {
+                    "type": "boolean"
                 },
                 "environment": {
                     "$ref": "#/definitions/TaskEnvironment"
@@ -124,22 +114,31 @@
                 },
                 "logFile": {
                     "type": "string"
-                },
-                "link": {
-                    "type": "string"
-                },
-                "context": {
-                    "type": "string"
                 }
             },
-            "required": [],
+            "required": [
+                "alias",
+                "cmd"
+            ],
             "title": "Task"
         },
-        "TaskEnvironment": {
+        "TaskLists": {
+            "type": "array",
+            "items": {
+                "$ref": "#/definitions/TaskList"
+            }
+        },
+        "TaskList": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
-                "values": {
+                "alias": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "taskNames": {
                     "type": "array",
                     "items": {
                         "type": "string"
@@ -147,26 +146,22 @@
                 }
             },
             "required": [
-                "values"
-            ],
-            "title": "TaskEnvironment"
+                "alias",
+                "taskNames"
+            ]
         },
-        "Tags": {
+        "TaskEnvironment": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
-                "instance": {
-                    "type": "string"
-                },
-                "tool": {
-                    "type": "string"
+                "values": {
+                    "type": "array"
                 }
             },
             "required": [
-                "instance",
-                "tool"
+                "values"
             ],
-            "title": "Tags"
+            "title": "TaskEnvironment"
         }
     }
 }

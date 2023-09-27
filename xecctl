@@ -140,6 +140,8 @@ build_per_platform() {
 }
 ############################################################
 run() {
+    export XEC_ENV_KEY=XEC_ENV_VALUE
+    export XEC_SECRET_KEY=XEC_SECRET_VALUE
     go run main.go $@
 }
 ############################################################

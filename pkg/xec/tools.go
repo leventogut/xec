@@ -27,3 +27,13 @@ func ConvertEnvMapToEnvString(kvm map[string]string) string {
 	}
 	return ""
 }
+
+func FindStringInSlice(haystack []string, needle string) bool {
+	var found bool
+	for _, h := range haystack {
+		if h == needle {
+			found = true
+		}
+	}
+	return found
+}
