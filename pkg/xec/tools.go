@@ -1,6 +1,7 @@
 package xec
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"regexp"
@@ -36,4 +37,12 @@ func FindStringInSlice(haystack []string, needle string) bool {
 		}
 	}
 	return found
+}
+
+func ParseConfig(C interface{}) {
+	CJSON, err := json.MarshalIndent(C, "", "  ")
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+	o.Debug(fmt.Sprintf("Config in indented JSON:\n %s\n", string(CJSON)))
 }

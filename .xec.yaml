@@ -7,12 +7,14 @@ taskDefaults:
     values:
       - defaultKey: defaultValue
       - environment: dev
-    passOn: false
-    acceptFilterRegex:
-      - "XEC_*"
-    rejectFilterRegex:
-      - "SECRET*"
-    ignoreError: true
+    passOn: true
+    # acceptFilterRegex:
+    #   - "XEC_*"
+    #   - "S3*"
+    #   - ""
+    # rejectFilterRegex:
+    # - "SECRET*"
+  # ignoreError: true
 tasks:
   - alias: printenv
     description: execute printenv, usually for debugging.
@@ -32,6 +34,7 @@ tasks:
     cmd: ls
     args:
       - "-z"
+    # ignoreError: true
     environment:
       values:
         - task: printenv
@@ -42,3 +45,9 @@ taskLists:
     taskNames:
       - ls
       - printenv
+  - alias: lszenv
+    description: "tasklist for ls and env errors"
+    taskNames:
+      - lsz
+      - printenv
+    ignoreError: true

@@ -37,7 +37,7 @@ func Execute(taskPointerAddress **Task, args []string) {
 	t.Status.ExecCmd.Stdin = os.Stdin
 	t.Status.ExecCmd.Stdout = os.Stdout
 	t.Status.ExecCmd.Stderr = os.Stderr
-	o.Debug("Task " + t.Alias + " is starting")
+	o.Info("Task " + t.Alias + " is starting")
 	t.Status.Started = true
 
 	// Execute command
@@ -49,15 +49,17 @@ func Execute(taskPointerAddress **Task, args []string) {
 	}
 
 	t.Status.Finished = true
-	o.Debug("Task " + t.Alias + " is finished")
+	o.Info("Task " + t.Alias + " is finished")
 	t.Status.ExitCode = t.Status.ExecCmd.ProcessState.ExitCode()
 
 	o.Dev(fmt.Sprintf("PID: %v, ExitCode: %v\n", t.Status.ExecCmd.ProcessState.Pid(), t.Status.ExecCmd.ProcessState.ExitCode()))
 	if t.Status.Success {
-		o.Debug("Task completed successfully")
+		o.Success("Task completed successfully")
+	} else {
+		o.Error("Task didn't completed.")
 	}
 	if !t.IgnoreError && t.Status.ExitCode != 0 {
-		o.Debug("IgnoreError is not set and task errored. Exiting")
+		o.Error("IgnoreError is not set and task errored. Exiting (default)")
 		os.Exit(1)
 	}
 }

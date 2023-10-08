@@ -143,6 +143,9 @@
                     "items": {
                         "type": "string"
                     }
+                },
+                "ignoreError": {
+                    "type": "boolean"
                 }
             },
             "required": [

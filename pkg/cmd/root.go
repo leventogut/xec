@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"leventogut/xec/pkg/output"
 	"leventogut/xec/pkg/xec"
@@ -18,16 +17,17 @@ const (
 )
 
 var (
-	o          = output.GetInstance()
-	C          xec.Config // C is config object.
-	ConfigFile string
-	Verbose    bool         // Verbose defines the verbosity as a boolean.
-	Debug      bool         // Debug defines if debug should be enabled.
-	Dev        bool         // Dev enables development level output
-	Timeout    int    = 600 // Timeout defines the maximum time the task execution can take place.
-	NoColor    bool         // NoColor defines a boolean, when true output will not be colorized.
-	LogFile    string       // Log file name
-	Quiet      bool         // Quiet option
+	o               = output.GetInstance()
+	C               xec.Config // C is config object.
+	ConfigFile      string
+	Verbose         bool         // Verbose defines the verbosity as a boolean.
+	Debug           bool         // Debug defines if debug should be enabled.
+	Dev             bool         // Dev enables development level output
+	Timeout         int    = 600 // Timeout defines the maximum time the task execution can take place.
+	NoColor         bool         // NoColor defines a boolean, when true output will not be colorized.
+	LogFile         string       // Log file name
+	Quiet           bool         // Quiet option
+	IgnoreErrorFlag bool         // Continue even if the task errors
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -56,6 +56,16 @@ func Execute() {
 			}
 		}
 
+		o.Success(fmt.Sprintf("IgnoreErrorFlag: +%v\n", IgnoreErrorFlag))
+		o.Dev(fmt.Sprintf("t.IgnoreError is %v\n", t.IgnoreError))
+		o.Dev(fmt.Sprintf("Execute: C.TaskDefaults.IgnoreError is %v\n", C.TaskDefaults.IgnoreError))
+
+		if IgnoreErrorFlag {
+			t.IgnoreError = true
+		}
+		if !t.IgnoreError {
+			t.IgnoreError = C.TaskDefaults.IgnoreError
+		}
 		// Copy defaults from main config/taskDefaults to the task if task value is empty / undefined.
 		if !t.Environment.PassOn {
 			t.Environment.PassOn = C.TaskDefaults.Environment.PassOn
@@ -67,6 +77,9 @@ func Execute() {
 		if t.Environment.RejectFilterRegex == nil {
 			t.Environment.RejectFilterRegex = C.TaskDefaults.Environment.RejectFilterRegex
 		}
+
+		t.Environment.Values = append(t.Environment.Values, C.TaskDefaults.Environment.Values...)
+
 		if t.Timeout == 0 {
 			if C.TaskDefaults.Timeout != 0 {
 				t.Timeout = C.TaskDefaults.Timeout
@@ -74,12 +87,6 @@ func Execute() {
 				t.Timeout = xec.DefaultTimeout
 			}
 		}
-
-		if !t.IgnoreError {
-			t.IgnoreError = C.TaskDefaults.IgnoreError
-		}
-
-		t.Environment.Values = append(t.Environment.Values, C.TaskDefaults.Environment.Values...)
 
 		if t.LogFile == "" {
 			t.LogFile = C.TaskDefaults.LogFile
@@ -113,6 +120,9 @@ func Execute() {
 			for _, tInstance := range C.Tasks {
 				t := tInstance
 				if taskName == t.Alias {
+					if tL.IgnoreError {
+						tInstance.IgnoreError = true
+					}
 					taskListTasks = append(taskListTasks, t)
 				}
 			}
@@ -124,6 +134,7 @@ func Execute() {
 			Args:  cobra.ArbitraryArgs,
 			Run: func(cmd *cobra.Command, args []string) {
 				for _, taskListTask := range taskListTasks {
+					// o.Error(fmt.Sprintf("taskListTask: %+v", taskListTask))
 					xec.Execute(&taskListTask, taskListTask.Args)
 				}
 			},
@@ -135,13 +146,6 @@ func Execute() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-
-	// o.SetLogFileFlag(LogFile)
-	// o.SetNoColorFlag(NoColor)
-	// o.SetQuietFlag(Quiet)
-	// o.SetDebugFlag(Debug)
-	// o.SetDevFlag(Dev)
-	// o.SetVerboseFlag(Verbose)
 }
 
 func init() {
@@ -153,6 +157,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolVarP(&Debug, "debug", "d", false, "Debug level output.  (Default is true i.e. debug output enabled.)")
 	rootCmd.PersistentFlags().BoolVarP(&Quiet, "quiet", "q", false, "No output.  (Default is false i.e. not quiet.)")
 	rootCmd.PersistentFlags().StringVarP(&LogFile, "log-file", "l", "", "Filename to use for logging.")
+	rootCmd.PersistentFlags().BoolVarP(&IgnoreErrorFlag, "ignore-error", "i", false, "Ignore error on tasks.")
 
 	viper.BindPFlag("dev", rootCmd.Flags().Lookup("dev"))
 	viper.BindPFlag("noColor", rootCmd.Flags().Lookup("no-color"))
@@ -160,6 +165,7 @@ func init() {
 	viper.BindPFlag("debug", rootCmd.Flags().Lookup("debug"))
 	viper.BindPFlag("quiet", rootCmd.Flags().Lookup("quiet"))
 	viper.BindPFlag("logFile", rootCmd.Flags().Lookup("log-file"))
+	viper.BindPFlag("ignoreErrorFlag", rootCmd.Flags().Lookup("ignore-error"))
 
 	initConfig()
 }
@@ -179,14 +185,5 @@ func initConfig() {
 	err = viper.Unmarshal(&C)
 	if err != nil {
 		log.Fatalf("Can't decode config, error: %v", err)
-	}
-
-	// viper.Debug()
-	if Dev {
-		CJSON, err := json.MarshalIndent(C, "", "  ")
-		if err != nil {
-			log.Fatalf(err.Error())
-		}
-		o.Debug(fmt.Sprintf("Config in indented JSON:\n %s\n", string(CJSON)))
 	}
 }

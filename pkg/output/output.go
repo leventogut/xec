@@ -180,14 +180,14 @@ func (o *output) Output(message string, outputType string, writers ...[]io.Write
 	if !o.quiet {
 		if outputType == "error" || outputType == "fatal" {
 			w = true
-		} else if outputType == "debug" && o.debug {
+		} else if outputType != "dev" && o.debug {
 			prefix = now + " | "
 			w = true
-		} else if outputType == "info" || outputType == "warning" && o.verbose {
+		} else if (outputType == "info" || outputType == "warning") && o.verbose {
 			w = true
 		} else if outputType == "success" {
 			w = true
-		} else if outputType == "dev" && o.dev {
+		} else if o.dev {
 			prefix = now + " | "
 			w = true
 		} else {
