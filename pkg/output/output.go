@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/fatih/color"
@@ -24,6 +25,7 @@ type Output interface {
 	SetDebugFlag(b bool)
 	VerboseFlag() bool
 	SetVerboseFlag(b bool)
+	Output()
 }
 type output struct {
 	noColor bool
@@ -37,23 +39,13 @@ type output struct {
 }
 
 var (
-	L      *output
-	prefix string
+	L       *output
+	prefix  string
+	once    sync.Once
+	logFile *os.File
 )
 
-func init() {
-	L = NewOutput(false, "", false, false, false, false)
-	// L = new(output)
-	L.SetNoColorFlag(false)
-	L.SetDebugFlag(false)
-	L.SetDevFlag(false)
-	L.SetLogFileFlag("")
-	L.SetQuietFlag(false)
-	L.SetVerboseFlag(false)
-}
-
 func NewOutput(noColor bool, logFile string, quiet bool, debug bool, dev bool, verbose bool) *output {
-	log.Println("output initialized")
 	return &output{
 		noColor: noColor,
 		logFile: logFile,
@@ -64,6 +56,27 @@ func NewOutput(noColor bool, logFile string, quiet bool, debug bool, dev bool, v
 	}
 }
 
+func GetInstance() *output {
+	once.Do(func() {
+		L = NewOutput(false, "", false, false, false, false)
+		if !L.quiet {
+			L.writers = append(L.writers, os.Stdout)
+		}
+		L.setLogFile()
+
+	})
+	return L
+}
+func (o *output) setLogFile() {
+	// Log to file if logFile is set
+	if L.logFile != "" {
+		logFile, err := os.OpenFile(L.logFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+		if err != nil {
+			log.Fatalf("Can't open log file:  %v", err)
+		}
+		L.writers = append(L.writers, logFile)
+	}
+}
 func (o *output) NoColorFlag() bool {
 	return o.noColor
 }
@@ -75,6 +88,7 @@ func (o *output) LogFileFlag() string {
 }
 func (o *output) SetLogFileFlag(f string) {
 	o.logFile = f
+	o.setLogFile()
 }
 func (o *output) QuietFlag() bool {
 	return o.quiet
@@ -88,14 +102,12 @@ func (o *output) DevFlag() bool {
 func (o *output) SetDevFlag(b bool) {
 	o.dev = b
 }
-
 func (o *output) DebugFlag() bool {
 	return o.debug
 }
 func (o *output) SetDebugFlag(b bool) {
 	o.debug = b
 }
-
 func (o *output) VerboseFlag() bool {
 	return o.verbose
 }
@@ -131,7 +143,7 @@ func (o *output) Success(m string) {
 }
 
 // Output receives two strings (severity and message and outputs to stdout or
-func (o output) Output(message string, outputType string, writers ...[]io.Writer) {
+func (o *output) Output(message string, outputType string, writers ...[]io.Writer) {
 	devColor := color.FgHiCyan
 	debugColor := color.FgYellow
 	fatalColor := color.FgRed
@@ -139,8 +151,8 @@ func (o output) Output(message string, outputType string, writers ...[]io.Writer
 	warningColor := color.FgHiYellow
 	infoColor := color.FgHiBlue
 	successColor := color.FgHiGreen
-	defer color.Unset()
 	color.Unset()
+	defer color.Unset()
 	if outputType == "dev" {
 		o.color = color.New(devColor)
 	} else if outputType == "debug" {
@@ -161,42 +173,41 @@ func (o output) Output(message string, outputType string, writers ...[]io.Writer
 	if o.noColor {
 		o.color.DisableColor()
 	}
-	now := time.Now().Format(time.RFC3339)
+	now := time.Now().Format(time.RFC3339Nano)
+	prefix = now + " | "
+
+	w := false
 	if !o.quiet {
-		log.Println("not quiet")
 		if outputType == "error" || outputType == "fatal" {
-			o.writers = append(o.writers, os.Stderr)
+			w = true
 		} else if outputType == "debug" && o.debug {
-			o.writers = append(o.writers, os.Stdout)
 			prefix = now + " | "
+			w = true
 		} else if outputType == "info" || outputType == "warning" && o.verbose {
-			o.writers = append(o.writers, os.Stdout)
-		} else if outputType == "dev" && o.dev {
-			o.writers = append(o.writers, os.Stdout)
-			prefix = now + " | "
+			w = true
 		} else if outputType == "success" {
-			o.writers = append(o.writers, os.Stdout)
+			w = true
+		} else if outputType == "dev" && o.dev {
+			prefix = now + " | "
+			w = true
 		} else {
-			o.writers = append(o.writers, os.Stdout)
-			prefix = "UNDEFINED | "
+			prefix = now + " | UNDEFINED | "
+			w = true
 		}
 	}
-	// Log to file if logFile is set
-	if o.logFile != "" {
-		f, err := os.OpenFile(o.logFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+
+	if w {
+		_, err := o.write("[" + strings.ToUpper(outputType) + "]" + " | " + message)
 		if err != nil {
-			log.Fatalf("Can't open log file:  %v", err)
+			fmt.Printf("err: %v", err)
 		}
-		defer f.Close()
-		o.writers = append(o.writers, f)
-	}
-	_, err := o.write("[" + strings.ToUpper(outputType) + "]" + " | " + message)
-	if err != nil {
-		fmt.Printf("err: %v", err)
 	}
 }
 
-func (o output) write(s string) (n int, err error) {
+func (o *output) write(s string) (n int, err error) {
+	if o.logFile != "" {
+		defer logFile.Close()
+	}
 	for _, writer := range o.writers {
 		_, err = o.color.Fprintf(writer, prefix+s+"\n")
 		if err != nil {

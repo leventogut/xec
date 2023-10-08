@@ -3,7 +3,7 @@ package xec
 import (
 	"context"
 	"fmt"
-	o "leventogut/xec/pkg/output"
+	"leventogut/xec/pkg/output"
 	"os"
 	"os/exec"
 	"time"
@@ -11,6 +11,7 @@ import (
 
 var (
 	DefaultTimeout = 600
+	o              = output.GetInstance()
 )
 
 // Execute starts the defined command with it;s arguemnts.
@@ -20,27 +21,15 @@ func Execute(taskPointerAddress **Task, args []string) {
 	if t.Timeout == 0 {
 		t.Timeout = DefaultTimeout
 
-		o.L.Dev(fmt.Sprintf("Default timeout in task config not set, using global default timeout: %v", DefaultTimeout))
+		o.Dev(fmt.Sprintf("Default timeout in task config not set, using global default timeout: %v", DefaultTimeout))
 	}
 	t.Status.ExecContext, cancel = context.WithTimeout(context.Background(), time.Duration(t.Timeout)*time.Second)
 	defer cancel()
 	// Merge args from config and user entered
-	o.L.Debug(fmt.Sprintf("args: %+v", args))
-	// var passableArgs []string
-	// var dashFound bool = false
-	// for _, a := range args {
-	// 	if !dashFound {
-	// 		if a == "--" {
-	// 			dashFound = true
-	// 		}
-	// 	} else {
-	// 		passableArgs = append(passableArgs, a)
-	// 	}
-	// }
-	// o.L.Debug(fmt.Sprintf("passableArgs: %+v", passableArgs))
-	// args = append(passableArgs, t.Args...)
 	args = append(args, t.Args...)
+
 	t.Status.ExecCmd = exec.CommandContext(t.Status.ExecContext, t.Cmd, args...)
+
 	// Set environment values
 	t.Status.ExecCmd.Env = t.SetEnvironment()
 
@@ -48,23 +37,28 @@ func Execute(taskPointerAddress **Task, args []string) {
 	t.Status.ExecCmd.Stdin = os.Stdin
 	t.Status.ExecCmd.Stdout = os.Stdout
 	t.Status.ExecCmd.Stderr = os.Stderr
-	o.L.Debug("Task " + t.Alias + " is starting")
+	o.Debug("Task " + t.Alias + " is starting")
 	t.Status.Started = true
 
+	// Execute command
 	if err := t.Status.ExecCmd.Run(); err != nil {
-		o.L.Error(fmt.Sprintf("Error: %+v\n", err))
+		o.Error(fmt.Sprintf("Error: %+v\n", err))
 		t.Status.Success = false
 	} else {
 		t.Status.Success = true
 	}
 
 	t.Status.Finished = true
-	o.L.Debug("Task " + t.Alias + " is finished")
+	o.Debug("Task " + t.Alias + " is finished")
 	t.Status.ExitCode = t.Status.ExecCmd.ProcessState.ExitCode()
 
-	o.L.Dev(fmt.Sprintf("PID: %v, ExitCode: %v\n", t.Status.ExecCmd.ProcessState.Pid(), t.Status.ExecCmd.ProcessState.ExitCode()))
+	o.Dev(fmt.Sprintf("PID: %v, ExitCode: %v\n", t.Status.ExecCmd.ProcessState.Pid(), t.Status.ExecCmd.ProcessState.ExitCode()))
 	if t.Status.Success {
-		o.L.Debug("Task completed successfully")
+		o.Debug("Task completed successfully")
+	}
+	if !t.IgnoreError && t.Status.ExitCode != 0 {
+		o.Debug("IgnoreError is not set and task errored. Exiting")
+		os.Exit(1)
 	}
 }
 

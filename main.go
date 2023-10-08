@@ -1,8 +1,6 @@
 package main
 
-import (
-	"leventogut/xec/pkg/cmd"
-)
+import "leventogut/xec/pkg/cmd"
 
 func main() {
 	cmd.Execute()

@@ -12,14 +12,14 @@ xec --debug --verbose --dev ls -- -h
 
 ## TODO List
 
-- [ ] Flags are not working (current solution dictates PFlags are not used by the sub-processes, not acceptable)
+- [X] Flags are not working (current solution dictates PFlags are not used by the sub-processes, not acceptable)
 - [ ] Multiple config file reading.
 - [X] Find which license to use and copy it.
 - [ ] Start writing tests.
 - [ ] Importing function.
 - [ ] reading .env
 - [ ] Ability to add extra args in TaskLists?
-- [ ] --quiet is not working
+- [X] --quiet is not working
 
 ## Features
 

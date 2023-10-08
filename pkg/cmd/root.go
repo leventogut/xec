@@ -3,7 +3,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	o "leventogut/xec/pkg/output"
+	"leventogut/xec/pkg/output"
 	"leventogut/xec/pkg/xec"
 	"log"
 	"os"
@@ -18,22 +18,22 @@ const (
 )
 
 var (
+	o          = output.GetInstance()
 	C          xec.Config // C is config object.
 	ConfigFile string
-	Verbose    bool   = true             // Verbose defines the verbosity as a boolean.
-	Debug      bool   = false            // Debug defines if debug should be enabled.
-	Dev        bool   = false            // Dev enables development level output
-	Timeout    int    = 600              // Timeout defines the maximum time the task execution can take place.
-	NoColor    bool   = false            // NoColor defines a boolean, when true output will not be colorized.
-	LogFile    string = AppName + ".log" // Logfile name
-	Quiet             = false
+	Verbose    bool         // Verbose defines the verbosity as a boolean.
+	Debug      bool         // Debug defines if debug should be enabled.
+	Dev        bool         // Dev enables development level output
+	Timeout    int    = 600 // Timeout defines the maximum time the task execution can take place.
+	NoColor    bool         // NoColor defines a boolean, when true output will not be colorized.
+	LogFile    string       // Log file name
+	Quiet      bool         // Quiet option
 )
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "xec [OPTIONS] <alias>",
+	Use:   "xec <flags> <alias> -- [additional-arguments]",
 	Short: "Simple command (task) executor.",
-
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
 			cmd.Help()
@@ -51,7 +51,9 @@ func Execute() {
 		t := tInstance
 
 		if t.Timeout == 0 {
-			t.Timeout = xec.DefaultTimeout
+			if C.TaskDefaults.Timeout == 0 {
+				t.Timeout = xec.DefaultTimeout
+			}
 		}
 
 		// Copy defaults from main config/taskDefaults to the task if task value is empty / undefined.
@@ -73,19 +75,30 @@ func Execute() {
 			}
 		}
 
+		if !t.IgnoreError {
+			t.IgnoreError = C.TaskDefaults.IgnoreError
+		}
+
 		t.Environment.Values = append(t.Environment.Values, C.TaskDefaults.Environment.Values...)
 
 		if t.LogFile == "" {
 			t.LogFile = C.TaskDefaults.LogFile
 		}
 
+		// Add task aliases (sub-commands)
 		rootCmd.AddCommand(&cobra.Command{
 			Use:   t.Alias,
 			Short: t.Description,
-			// DisableFlagParsing: true,
-			Args: cobra.ArbitraryArgs,
+			Args:  cobra.ArbitraryArgs,
+			PersistentPreRun: func(cmd *cobra.Command, args []string) {
+				o.SetLogFileFlag(LogFile)
+				o.SetNoColorFlag(NoColor)
+				o.SetQuietFlag(Quiet)
+				o.SetDebugFlag(Debug)
+				o.SetDevFlag(Dev)
+				o.SetVerboseFlag(Verbose)
+			},
 			Run: func(cmd *cobra.Command, args []string) {
-				o.L.Debug(fmt.Sprintf("args under sub-commands: %+v\n", args))
 				xec.Execute(&t, args)
 			},
 		})
@@ -108,8 +121,7 @@ func Execute() {
 		rootCmd.AddCommand(&cobra.Command{
 			Use:   tL.Alias,
 			Short: tL.Description,
-			// DisableFlagParsing: true,
-			Args: cobra.ArbitraryArgs,
+			Args:  cobra.ArbitraryArgs,
 			Run: func(cmd *cobra.Command, args []string) {
 				for _, taskListTask := range taskListTasks {
 					xec.Execute(&taskListTask, taskListTask.Args)
@@ -117,53 +129,37 @@ func Execute() {
 			},
 		})
 	}
+
 	err = rootCmd.Execute()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+
+	// o.SetLogFileFlag(LogFile)
+	// o.SetNoColorFlag(NoColor)
+	// o.SetQuietFlag(Quiet)
+	// o.SetDebugFlag(Debug)
+	// o.SetDevFlag(Dev)
+	// o.SetVerboseFlag(Verbose)
 }
 
 func init() {
 	// Global flags:
 	rootCmd.PersistentFlags().StringVar(&ConfigFile, "config", "", "config file (default is ~/.xec.yaml and/or $PWD/.xec.yaml)")
-	rootCmd.PersistentFlags().BoolVar(&Dev, "dev", false, "Enable development level messages.")
-	rootCmd.PersistentFlags().BoolVar(&NoColor, "no-color", false, "Disable color output. (Default is true i.e. color enabled.)")
-	rootCmd.PersistentFlags().BoolVar(&Verbose, "verbose", true, "Verbose level output.  (Default is true i.e. verbose output enabled.)")
-	rootCmd.PersistentFlags().BoolVar(&Debug, "debug", false, "Debug level output.  (Default is true i.e. debug output enabled.)")
-	rootCmd.PersistentFlags().BoolVar(&Quiet, "quiet", false, "No output.  (Default is false i.e. not quiet.)")
-	rootCmd.PersistentFlags().StringVar(&LogFile, "log-file", "", "Filename to use for logging.")
+	rootCmd.PersistentFlags().BoolVarP(&Dev, "dev", "z", false, "Enable development level messages.")
+	rootCmd.PersistentFlags().BoolVarP(&NoColor, "no-color", "n", false, "Disable color output. (Default is true i.e. color enabled.)")
+	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "Verbose level output.  (Default is true i.e. verbose output enabled.)")
+	rootCmd.PersistentFlags().BoolVarP(&Debug, "debug", "d", false, "Debug level output.  (Default is true i.e. debug output enabled.)")
+	rootCmd.PersistentFlags().BoolVarP(&Quiet, "quiet", "q", false, "No output.  (Default is false i.e. not quiet.)")
+	rootCmd.PersistentFlags().StringVarP(&LogFile, "log-file", "l", "", "Filename to use for logging.")
 
-	if Dev {
-		o.L.Dev(fmt.Sprintf("Dev: %+v", Dev))
-		o.L.Dev("Dev enabled")
-	}
-	if NoColor {
-		o.L.Dev(fmt.Sprintf("NoColor: %+v", NoColor))
-		o.L.Dev("NoColor enabled")
-	}
-
-	if Verbose {
-		o.L.Dev(fmt.Sprintf("Verbose: %+v", Verbose))
-		o.L.Dev("Verbose enabled")
-	}
-	if Debug {
-		o.L.Dev(fmt.Sprintf("Debug: %+v", Debug))
-		o.L.Dev("Debug enabled")
-	}
-	if Quiet {
-		o.L.Dev(fmt.Sprintf("Quiet: %+v", Quiet))
-		o.L.Dev("Quiet enabled")
-	}
-
-	log.Printf("LogFile->: %+v\n", LogFile)
-	o.L.SetLogFileFlag(LogFile)
-	o.L.SetNoColorFlag(NoColor)
-	o.L.SetQuietFlag(Quiet)
-	o.L.SetDebugFlag(Debug)
-	log.Printf("Dev: %+v\n", Dev)
-	o.L.SetDevFlag(Dev)
-	o.L.SetLogFileFlag(LogFile)
+	viper.BindPFlag("dev", rootCmd.Flags().Lookup("dev"))
+	viper.BindPFlag("noColor", rootCmd.Flags().Lookup("no-color"))
+	viper.BindPFlag("verbose", rootCmd.Flags().Lookup("verbose"))
+	viper.BindPFlag("debug", rootCmd.Flags().Lookup("debug"))
+	viper.BindPFlag("quiet", rootCmd.Flags().Lookup("quiet"))
+	viper.BindPFlag("logFile", rootCmd.Flags().Lookup("log-file"))
 
 	initConfig()
 }
@@ -174,10 +170,7 @@ func initConfig() {
 	viper.SetConfigType("yaml")                         // REQUIRED if the config file does not have the extension in the name
 	viper.AddConfigPath(".")                            // look for config in the working directory
 	viper.AddConfigPath("$HOME")                        // look for configs in the $HOME
-	// defaults
-	viper.SetDefault("Verbose", Verbose)
-	viper.SetDefault("Debug", Debug)
-	viper.SetDefault("Timeout", Timeout)
+
 	err = viper.ReadInConfig() // Find and read the config file
 	if err != nil {            // Handle errors reading the config file
 		panic(fmt.Errorf("fatal error config file: %w", err))
@@ -194,6 +187,6 @@ func initConfig() {
 		if err != nil {
 			log.Fatalf(err.Error())
 		}
-		o.L.Debug(fmt.Sprintf("Config in indented JSON:\n %s\n", string(CJSON)))
+		o.Debug(fmt.Sprintf("Config in indented JSON:\n %s\n", string(CJSON)))
 	}
 }

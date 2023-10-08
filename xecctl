@@ -13,6 +13,7 @@ TODO:
 EOF
 ############################################################ Variables
 EXECUTABLE_NAME=xec
+BINARY_DIR="./bin"
 ############################################################ Overrides
 DEBUG=0
 ############################################################ Defaults
@@ -136,7 +137,7 @@ build() {
 build_per_platform() {
     GOOS=${1:-darwin}
     GOARCH=${2:-arm64}
-    go build -o ${EXECUTABLE_NAME}-${GOOS}-${GOARCH} .
+    go build -o ${BINARY_DIR}/${EXECUTABLE_NAME}-${GOOS}-${GOARCH} .
 }
 ############################################################
 run() {

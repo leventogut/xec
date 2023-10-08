@@ -13,7 +13,7 @@
                         "debug": {
                             "type": "boolean"
                         },
-                        "logfile": {
+                        "logFile": {
                             "type": "string"
                         },
                         "environment": {

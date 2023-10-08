@@ -14,9 +14,11 @@ type Config struct {
 
 // TaskDefaults defines the default values for all tasks mentioned.
 type TaskDefaults struct {
+	Debug       bool        `yaml:"debug" json:"debug"`
 	Timeout     int         `yaml:"timeout" json:"timeout"`
 	Environment Environment `yaml:"environment" json:"environment"`
 	LogFile     string      `yaml:"logFile" json:"logFile"`
+	IgnoreError bool        `yaml:"ignoreError" json:"ignoreError"`
 }
 
 // Task is a combination of alias, description, command, and arguments.
@@ -28,6 +30,7 @@ type Task struct {
 	Timeout     int         `yaml:"timeout" json:"timeout"`
 	Environment Environment `yaml:"environment" json:"environment"`
 	LogFile     string      `yaml:"logFile" json:"logFile"`
+	IgnoreError bool        `yaml:"ignoreError" json:"ignoreError"`
 	Status      TaskStatus  `yaml:"taskStatus" json:"taskStatus"`
 }
 
