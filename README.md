@@ -28,38 +28,14 @@ Or a more advanced usage:
 xec --ignore-errors myls -- -h
 ```
 
-## TODO List
-
-- [ ] reading .env
-- [ ] In environment values section, if no filter is defined no external environment value is received.
-- [ ] env-file (.env) flag and check if we can change it in the library we are using.
-
-## Features
-
-- [ ] Reads .env by default.
-- [ ] Can import multiple xec files under self-defined alias.
-- [X] Control environment value security with pass on/off, accept and, reject filters.
-- [X] Define timeout for a task.
-- [X] Easily create new aliases for lists of tasks that are previously defined.
-- [X] Setting default values of task options with TaskDefaults section in configuration file.
-- [X] Looks for a file named .xec.yaml in either current and $HOME directory.
-
-## Planned features
-
-- [ ] Different logging for each task/task list as configurable i.e. logFile field for each task and task list.
-- [ ] Importing multiple config files function.
-- [ ] Ability to add extra args in TaskLists?
-
 ## Defaults
 
 - IgnoreErrors: false
 - Timeout: Timeout for a task. -> 10 seconds.
 
-## Behaviors
+## A task
 
-- Environment values defined in TaskDefault and individual task are merged.
-
-## All fields of a task
+All configuration options of a task:
 
 ```yaml
 tasks:
@@ -88,7 +64,11 @@ tasks:
 ## Error handling of tasks
 
 You can ignore (and continue) errored tasks. This can be achieved in three levels, TaskDefaults, Task, TaskLists.
-TaskDefaults set's all task instances, while Task level affects individual. The other level is TaskList which affects all tasks in the task list.
+TaskDefaults set's all task instances, while Task level affects individual. The other level affects TaskList which affects all tasks in the task list.
+
+## Writing configuration files (schema)
+
+JSON schema can be found [here](https://test.test)
 
 ## Examples
 
@@ -103,17 +83,28 @@ tasks:
       - -al
 ```
 
-### Importing
-
-You can import other xec files under a alias/context name.
+### Task list
 
 ```yaml
-tasks:
-  - alias: k
-    description: Kubernetes tasks.
-    import: ~/.xec/skills/xec-kubernetes.yaml
+...
+taskLists:
+  - alias: lsenv
+    description: "tasklist for ls and env"
+    taskNames:
+      - ls
+      - printenv
+  - alias: lszenv
+    description: "tasklist for ls and env errors"
+    taskNames:
+      - lsz
+      - printenv
+    ignoreError: true
 ```
 
 ## Contributing
 
 Contributions are most welcome.
+
+## Build
+
+## Install
