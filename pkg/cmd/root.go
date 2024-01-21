@@ -6,6 +6,7 @@ import (
 	"leventogut/xec/pkg/xec"
 	"log"
 	"os"
+	"sync"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -56,9 +57,9 @@ func Execute() {
 			}
 		}
 
-		o.Success(fmt.Sprintf("IgnoreErrorFlag: +%v\n", IgnoreErrorFlag))
-		o.Dev(fmt.Sprintf("t.IgnoreError is %v\n", t.IgnoreError))
-		o.Dev(fmt.Sprintf("Execute: C.TaskDefaults.IgnoreError is %v\n", C.TaskDefaults.IgnoreError))
+		// o.Success(fmt.Sprintf("IgnoreErrorFlag: +%v\n", IgnoreErrorFlag))
+		// o.Dev(fmt.Sprintf("t.IgnoreError is %v\n", t.IgnoreError))
+		// o.Dev(fmt.Sprintf("Execute: C.TaskDefaults.IgnoreError is %v\n", C.TaskDefaults.IgnoreError))
 
 		if IgnoreErrorFlag {
 			t.IgnoreError = true
@@ -106,7 +107,9 @@ func Execute() {
 				o.SetVerboseFlag(Verbose)
 			},
 			Run: func(cmd *cobra.Command, args []string) {
-				xec.Execute(&t)
+				var wg sync.WaitGroup
+				wg.Add(1)
+				xec.Execute(&sync.WaitGroup{}, &t)
 			},
 		})
 	}
@@ -133,9 +136,20 @@ func Execute() {
 			Short: tL.Description,
 			Args:  cobra.ArbitraryArgs,
 			Run: func(cmd *cobra.Command, args []string) {
-				for _, taskListTask := range taskListTasks {
-					// o.Error(fmt.Sprintf("taskListTask: %+v", taskListTask))
-					xec.Execute(&taskListTask)
+				var wg sync.WaitGroup
+				if tL.Parallel {
+					for _, taskListTask := range taskListTasks {
+						taskListTask := taskListTask
+						wg.Add(1)
+						go xec.Execute(&wg, &taskListTask)
+					}
+					wg.Wait()
+
+				} else {
+					for _, taskListTask := range taskListTasks {
+						wg.Add(1)
+						xec.Execute(&wg, &taskListTask)
+					}
 				}
 			},
 		})

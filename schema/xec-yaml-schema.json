@@ -146,6 +146,9 @@
                 },
                 "ignoreError": {
                     "type": "boolean"
+                },
+                "parallel": {
+                    "type": "boolean"
                 }
             },
             "required": [

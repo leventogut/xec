@@ -31,7 +31,19 @@ xec --ignore-errors myls -- -h
 ## Defaults
 
 - IgnoreErrors: false
-- Timeout: Timeout for a task. -> 10 seconds.
+- Timeout: Timeout for a task. -> 10 minutes.
+
+## Parallelism
+
+TaskList has the option `parallel`, when set to true xec will run the tasks in parallel.
+
+```yaml
+  - alias: parallel
+    parallel: true
+    taskNames:
+      - wait_10
+      - wait_5
+```
 
 ## A task
 

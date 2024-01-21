@@ -6,6 +6,7 @@ import (
 	"leventogut/xec/pkg/output"
 	"os"
 	"os/exec"
+	"sync"
 	"time"
 )
 
@@ -15,13 +16,14 @@ var (
 )
 
 // Execute starts the defined command with it;s arguemnts.
-func Execute(taskPointerAddress **Task) {
+func Execute(wg *sync.WaitGroup, taskPointerAddress **Task) {
+	defer wg.Done()
 	t := *taskPointerAddress
 	var cancel context.CancelFunc
 	if t.Timeout == 0 {
 		t.Timeout = DefaultTimeout
 
-		o.Dev(fmt.Sprintf("Default timeout in task config not set, using global default timeout: %v", DefaultTimeout))
+		// o.Dev(fmt.Sprintf("Default timeout in task config not set, using global default timeout: %v", DefaultTimeout))
 	}
 	t.Status.ExecContext, cancel = context.WithTimeout(context.Background(), time.Duration(t.Timeout)*time.Second)
 	defer cancel()
@@ -53,7 +55,7 @@ func Execute(taskPointerAddress **Task) {
 	o.Info("Task " + t.Alias + " is finished")
 	t.Status.ExitCode = t.Status.ExecCmd.ProcessState.ExitCode()
 
-	o.Dev(fmt.Sprintf("PID: %v, ExitCode: %v\n", t.Status.ExecCmd.ProcessState.Pid(), t.Status.ExecCmd.ProcessState.ExitCode()))
+	// o.Dev(fmt.Sprintf("PID: %v, ExitCode: %v\n", t.Status.ExecCmd.ProcessState.Pid(), t.Status.ExecCmd.ProcessState.ExitCode()))
 	if t.Status.Success {
 		o.Success("Task completed successfully")
 	} else {

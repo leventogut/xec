@@ -39,15 +39,26 @@ tasks:
       values:
         - task: printenv
         - environment2: dev2
+  - alias: wait_10
+    cmd: ./wait_10
+  - alias: wait_5
+    cmd: ./wait_5
 taskLists:
   - alias: lsenv
     description: "tasklist for ls and env"
+    parallel: true
     taskNames:
       - ls
       - printenv
+    ignoreError: true
   - alias: lszenv
     description: "tasklist for ls and env errors"
     taskNames:
       - lsz
       - printenv
     ignoreError: true
+  - alias: parallel
+    parallel: true
+    taskNames:
+      - wait_10
+      - wait_5

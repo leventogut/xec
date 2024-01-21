@@ -59,4 +59,5 @@ type TaskList struct {
 	Description string   `yaml:"description" json:"description"`
 	TaskNames   []string `yaml:"taskNames" json:"taskNames"`
 	IgnoreError bool     `yaml:"ignoreError" json:"ignoreError"`
+	Parallel    bool
 }
