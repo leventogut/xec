@@ -80,7 +80,7 @@ TaskDefaults set's all task instances, while Task level affects individual. The 
 
 ## Writing configuration files (schema)
 
-JSON schema can be found [here](https://test.test)
+JSON schema can be found [here](https://raw.githubusercontent.com/leventogut/xec/main/schema/xec-tasks-yaml-schema.json)
 
 ## Examples
 
