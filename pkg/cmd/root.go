@@ -106,7 +106,7 @@ func Execute() {
 				o.SetVerboseFlag(Verbose)
 			},
 			Run: func(cmd *cobra.Command, args []string) {
-				xec.Execute(&t, args)
+				xec.Execute(&t)
 			},
 		})
 	}
@@ -135,7 +135,7 @@ func Execute() {
 			Run: func(cmd *cobra.Command, args []string) {
 				for _, taskListTask := range taskListTasks {
 					// o.Error(fmt.Sprintf("taskListTask: %+v", taskListTask))
-					xec.Execute(&taskListTask, taskListTask.Args)
+					xec.Execute(&taskListTask)
 				}
 			},
 		})

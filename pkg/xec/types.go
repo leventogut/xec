@@ -27,6 +27,7 @@ type Task struct {
 	Description string      `yaml:"description" json:"description"`
 	Cmd         string      `yaml:"cmd" json:"cmd"`
 	Args        []string    `yaml:"args" json:"args"`
+	ExtraArgs   []string    // Extra args coming from the command line not the configuration.
 	Timeout     int         `yaml:"timeout" json:"timeout"`
 	Environment Environment `yaml:"environment" json:"environment"`
 	LogFile     string      `yaml:"logFile" json:"logFile"`

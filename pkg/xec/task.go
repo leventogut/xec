@@ -15,7 +15,7 @@ var (
 )
 
 // Execute starts the defined command with it;s arguemnts.
-func Execute(taskPointerAddress **Task, args []string) {
+func Execute(taskPointerAddress **Task) {
 	t := *taskPointerAddress
 	var cancel context.CancelFunc
 	if t.Timeout == 0 {
@@ -25,8 +25,9 @@ func Execute(taskPointerAddress **Task, args []string) {
 	}
 	t.Status.ExecContext, cancel = context.WithTimeout(context.Background(), time.Duration(t.Timeout)*time.Second)
 	defer cancel()
+
 	// Merge args from config and user entered
-	args = append(args, t.Args...)
+	args := append(t.Args, t.ExtraArgs...)
 
 	t.Status.ExecCmd = exec.CommandContext(t.Status.ExecContext, t.Cmd, args...)
 
