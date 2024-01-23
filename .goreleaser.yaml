@@ -33,10 +33,6 @@ archives:
       - goos: windows
         format: zip
 
-dockers:
-  - image_templates:
-      - leventogut/xec
-
 changelog:
   sort: asc
   filters:
