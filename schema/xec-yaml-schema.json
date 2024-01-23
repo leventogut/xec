@@ -114,6 +114,9 @@
                 },
                 "logFile": {
                     "type": "string"
+                },
+                "directory": {
+                    "type": "string"
                 }
             },
             "required": [

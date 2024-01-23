@@ -33,6 +33,11 @@ func Execute(wg *sync.WaitGroup, taskPointerAddress **Task) {
 
 	t.Status.ExecCmd = exec.CommandContext(t.Status.ExecContext, t.Cmd, args...)
 
+	// Change working directory if it is given.
+	if t.Directory != "" {
+		t.Status.ExecCmd.Dir = t.Directory
+	}
+
 	// Set environment values
 	t.Status.ExecCmd.Env = t.SetEnvironment()
 

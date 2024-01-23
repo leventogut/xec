@@ -32,6 +32,7 @@ type Task struct {
 	Environment Environment `yaml:"environment" json:"environment"`
 	LogFile     string      `yaml:"logFile" json:"logFile"`
 	IgnoreError bool        `yaml:"ignoreError" json:"ignoreError"`
+	Directory   string      `yaml:"directory" json:"directory"`
 	Status      TaskStatus  `yaml:"taskStatus" json:"taskStatus"`
 }
 

@@ -29,6 +29,7 @@ tasks:
     args:
       - "-al"
       # - "-h"
+    directory: /var/log
   - alias: lsz
     description: ls to give error.
     cmd: ls

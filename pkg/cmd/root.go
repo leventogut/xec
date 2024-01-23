@@ -47,6 +47,7 @@ var rootCmd = &cobra.Command{
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	var err error
+	var wg sync.WaitGroup
 
 	for _, tInstance := range C.Tasks {
 		t := tInstance
@@ -107,9 +108,8 @@ func Execute() {
 				o.SetVerboseFlag(Verbose)
 			},
 			Run: func(cmd *cobra.Command, args []string) {
-				var wg sync.WaitGroup
 				wg.Add(1)
-				xec.Execute(&sync.WaitGroup{}, &t)
+				xec.Execute(&wg, &t)
 			},
 		})
 	}
@@ -136,7 +136,6 @@ func Execute() {
 			Short: tL.Description,
 			Args:  cobra.ArbitraryArgs,
 			Run: func(cmd *cobra.Command, args []string) {
-				var wg sync.WaitGroup
 				if tL.Parallel {
 					for _, taskListTask := range taskListTasks {
 						taskListTask := taskListTask
