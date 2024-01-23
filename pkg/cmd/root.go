@@ -118,7 +118,7 @@ func Execute() {
 		tL := taskListInstance
 		// Find tasks from TaskList that matches by alias
 		var taskListTasks []*xec.Task
-		for _, taskName := range tL.TaskNames {
+		for _, taskName := range tL.TaskAliases {
 			// Find tasks pointer address
 			for _, tInstance := range C.Tasks {
 				t := tInstance

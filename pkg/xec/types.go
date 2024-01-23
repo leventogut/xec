@@ -57,7 +57,7 @@ type TaskStatus struct {
 type TaskList struct {
 	Alias       string   `yaml:"alias" json:"alias"`
 	Description string   `yaml:"description" json:"description"`
-	TaskNames   []string `yaml:"taskNames" json:"taskNames"`
+	TaskAliases []string `yaml:"taskAliases" json:"taskAliases"`
 	IgnoreError bool     `yaml:"ignoreError" json:"ignoreError"`
 	Parallel    bool
 }

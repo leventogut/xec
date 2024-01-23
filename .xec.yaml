@@ -47,18 +47,18 @@ taskLists:
   - alias: lsenv
     description: "tasklist for ls and env"
     parallel: true
-    taskNames:
+    taskAliases:
       - ls
       - printenv
     ignoreError: true
   - alias: lszenv
     description: "tasklist for ls and env errors"
-    taskNames:
+    taskAliases:
       - lsz
       - printenv
     ignoreError: true
   - alias: parallel
     parallel: true
-    taskNames:
+    taskAliases:
       - wait_10
       - wait_5
