@@ -3,6 +3,7 @@ package xec
 import (
 	"context"
 	"fmt"
+	"io"
 	"leventogut/xec/pkg/output"
 	"os"
 	"os/exec"
@@ -15,15 +16,17 @@ var (
 	o              = output.GetInstance()
 )
 
-// Execute starts the defined command with it;s arguemnts.
-func Execute(wg *sync.WaitGroup, taskPointerAddress **Task) {
+func ExecuteWithWaitGroups(wg *sync.WaitGroup, taskPointerAddress **Task) {
 	defer wg.Done()
+	Execute(taskPointerAddress)
+}
+
+// Execute starts the defined command with it;s arguemnts.
+func Execute(taskPointerAddress **Task) {
 	t := *taskPointerAddress
 	var cancel context.CancelFunc
 	if t.Timeout == 0 {
 		t.Timeout = DefaultTimeout
-
-		// o.Dev(fmt.Sprintf("Default timeout in task config not set, using global default timeout: %v", DefaultTimeout))
 	}
 	t.Status.ExecContext, cancel = context.WithTimeout(context.Background(), time.Duration(t.Timeout)*time.Second)
 	defer cancel()
@@ -41,12 +44,35 @@ func Execute(wg *sync.WaitGroup, taskPointerAddress **Task) {
 	// Set environment values
 	t.Status.ExecCmd.Env = t.SetEnvironment()
 
-	// TODO if quiet flag is set do not log to console.
 	t.Status.ExecCmd.Stdin = os.Stdin
-	t.Status.ExecCmd.Stdout = os.Stdout
-	t.Status.ExecCmd.Stderr = os.Stderr
+	var logFile *os.File
+
+	if t.LogFile != "" {
+		var err error
+
+		logFile, err = os.OpenFile(t.LogFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			o.Error(fmt.Sprintf("Can't open log file %+v - Error: %+v\n", t.LogFile, err))
+		}
+		defer logFile.Close()
+
+	} else {
+		logFile, _ = os.OpenFile(os.DevNull, os.O_WRONLY, 0)
+	}
+
+	if o.QuietFlag() {
+		t.Status.ExecCmd.Stdout = io.MultiWriter(logFile)
+		t.Status.ExecCmd.Stderr = io.MultiWriter(logFile)
+
+	} else {
+		t.Status.ExecCmd.Stdout = io.MultiWriter(logFile, os.Stdout)
+		t.Status.ExecCmd.Stderr = io.MultiWriter(logFile, os.Stderr)
+
+	}
+
 	o.Info("Task " + t.Alias + " is starting")
 	t.Status.Started = true
+	taskStartTime := time.Now()
 
 	// Execute command
 	if err := t.Status.ExecCmd.Run(); err != nil {
@@ -57,18 +83,19 @@ func Execute(wg *sync.WaitGroup, taskPointerAddress **Task) {
 	}
 
 	t.Status.Finished = true
-	o.Info("Task " + t.Alias + " is finished")
+	taskFinishTime := time.Now()
+	taskDuration := taskFinishTime.Sub(taskStartTime)
+
+	o.Info("Task " + t.Alias + " finished in " + taskDuration.String() + ".")
 	t.Status.ExitCode = t.Status.ExecCmd.ProcessState.ExitCode()
 
-	// o.Dev(fmt.Sprintf("PID: %v, ExitCode: %v\n", t.Status.ExecCmd.ProcessState.Pid(), t.Status.ExecCmd.ProcessState.ExitCode()))
 	if t.Status.Success {
-		o.Success("Task completed successfully")
+		o.Success("Task " + t.Alias + " completed successfully")
 	} else {
-		o.Error("Task didn't completed.")
+		o.Error("Task " + t.Alias + "didn't completed.")
 	}
 	if !t.IgnoreError && t.Status.ExitCode != 0 {
-		o.Error("IgnoreError is not set and task errored. Exiting (default)")
-		os.Exit(1)
+		os.Exit(t.Status.ExitCode)
 	}
 }
 

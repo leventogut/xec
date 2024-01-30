@@ -59,6 +59,7 @@ type TaskList struct {
 	Alias       string   `yaml:"alias" json:"alias"`
 	Description string   `yaml:"description" json:"description"`
 	TaskAliases []string `yaml:"taskAliases" json:"taskAliases"`
+	LogFile     string   `yaml:"logFile" json:"logFile"`
 	IgnoreError bool     `yaml:"ignoreError" json:"ignoreError"`
 	Parallel    bool
 }

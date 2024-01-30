@@ -62,20 +62,22 @@ func GetInstance() *output {
 		if !L.quiet {
 			L.writers = append(L.writers, os.Stdout)
 		}
-		L.setLogFile()
-
+		// L.setLogFile()
 	})
 	return L
 }
 func (o *output) setLogFile() {
-	// Log to file if logFile is set
-	if L.logFile != "" {
-		logFile, err := os.OpenFile(L.logFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
-		if err != nil {
-			log.Fatalf("Can't open log file:  %v", err)
+	once.Do(func() {
+		// Log to file if logFile is set
+		if o.logFile != "" {
+			logFile, err := os.OpenFile(L.logFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+			if err != nil {
+				log.Fatalf("Can't open log file:  %v", err)
+			}
+			o.writers = append(o.writers, logFile)
 		}
-		L.writers = append(L.writers, logFile)
-	}
+
+	})
 }
 func (o *output) NoColorFlag() bool {
 	return o.noColor
@@ -144,18 +146,17 @@ func (o *output) Success(m string) {
 
 // Output receives two strings (severity and message and outputs to stdout or
 func (o *output) Output(message string, outputType string, writers ...[]io.Writer) {
-	devColor := color.FgHiCyan
 	debugColor := color.FgYellow
 	fatalColor := color.FgRed
 	errorColor := color.FgRed
 	warningColor := color.FgHiYellow
 	infoColor := color.FgHiBlue
 	successColor := color.FgHiGreen
+
 	color.Unset()
 	defer color.Unset()
-	if outputType == "dev" {
-		o.color = color.New(devColor)
-	} else if outputType == "debug" {
+
+	if outputType == "debug" {
 		o.color = color.New(debugColor)
 	} else if outputType == "fatal" {
 		o.color = color.New(fatalColor)
@@ -173,31 +174,24 @@ func (o *output) Output(message string, outputType string, writers ...[]io.Write
 	if o.noColor {
 		o.color.DisableColor()
 	}
-	now := time.Now().Format(time.RFC3339Nano)
-	prefix = now + " | "
 
 	w := false
 	if !o.quiet {
 		if outputType == "error" || outputType == "fatal" {
 			w = true
-		} else if outputType != "dev" && o.debug {
-			prefix = now + " | "
+		} else if outputType == "debug" && o.debug {
 			w = true
 		} else if (outputType == "info" || outputType == "warning") && o.verbose {
 			w = true
 		} else if outputType == "success" {
 			w = true
-		} else if o.dev {
-			prefix = now + " | "
-			w = true
-		} else {
-			prefix = now + " | UNDEFINED | "
-			w = true
 		}
 	}
 
 	if w {
-		_, err := o.write("[" + strings.ToUpper(outputType) + "]" + " | " + message)
+		now := time.Now().Format(time.RFC3339)
+
+		_, err := o.write(now + " | " + "[" + strings.ToUpper(outputType) + "]" + " | " + message)
 		if err != nil {
 			fmt.Printf("err: %v", err)
 		}
@@ -209,7 +203,7 @@ func (o *output) write(s string) (n int, err error) {
 		defer logFile.Close()
 	}
 	for _, writer := range o.writers {
-		_, err = o.color.Fprintf(writer, prefix+s+"\n")
+		_, err = o.color.Fprintf(writer, s+"\n")
 		if err != nil {
 			fmt.Printf("err: %v", err)
 		}

@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -33,8 +34,8 @@ var (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "xec <flags> <alias> -- [additional-arguments]",
-	Short: "Simple command (task) executor.",
+	Use:   "xec <flags> <alias> -- [additional-arguments-to-be-passed]",
+	Short: "Simple command executor.",
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
 			cmd.Help()
@@ -47,7 +48,6 @@ var rootCmd = &cobra.Command{
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	var err error
-	var wg sync.WaitGroup
 
 	for _, tInstance := range C.Tasks {
 		t := tInstance
@@ -57,10 +57,6 @@ func Execute() {
 				t.Timeout = xec.DefaultTimeout
 			}
 		}
-
-		// o.Success(fmt.Sprintf("IgnoreErrorFlag: +%v\n", IgnoreErrorFlag))
-		// o.Dev(fmt.Sprintf("t.IgnoreError is %v\n", t.IgnoreError))
-		// o.Dev(fmt.Sprintf("Execute: C.TaskDefaults.IgnoreError is %v\n", C.TaskDefaults.IgnoreError))
 
 		if IgnoreErrorFlag {
 			t.IgnoreError = true
@@ -90,8 +86,15 @@ func Execute() {
 			}
 		}
 
+		// --log-file overrides taskDefaults and task logFile, task overrides taskDefaults
 		if t.LogFile == "" {
 			t.LogFile = C.TaskDefaults.LogFile
+		}
+
+		if t.LogFile == "auto" {
+			now := time.Now().Format(time.RFC3339Nano)
+			t.LogFile = "xec-log-" + t.Alias + "-" + now + ".log"
+			o.SetLogFileFlag(t.LogFile)
 		}
 
 		// Add task aliases (sub-commands)
@@ -100,7 +103,7 @@ func Execute() {
 			Short: t.Description,
 			Args:  cobra.ArbitraryArgs,
 			PersistentPreRun: func(cmd *cobra.Command, args []string) {
-				o.SetLogFileFlag(LogFile)
+				o.SetLogFileFlag(t.LogFile)
 				o.SetNoColorFlag(NoColor)
 				o.SetQuietFlag(Quiet)
 				o.SetDebugFlag(Debug)
@@ -108,8 +111,7 @@ func Execute() {
 				o.SetVerboseFlag(Verbose)
 			},
 			Run: func(cmd *cobra.Command, args []string) {
-				wg.Add(1)
-				xec.Execute(&wg, &t)
+				xec.Execute(&t)
 			},
 		})
 	}
@@ -126,28 +128,49 @@ func Execute() {
 					if tL.IgnoreError {
 						tInstance.IgnoreError = true
 					}
+					if tL.LogFile != "" {
+						tInstance.LogFile = tL.LogFile
+					}
+					if tInstance.LogFile == "" {
+						tInstance.LogFile = C.TaskDefaults.LogFile
+					}
 					taskListTasks = append(taskListTasks, t)
 				}
 			}
 		}
+
+		if tL.LogFile == "auto" {
+			now := time.Now().Format(time.RFC3339Nano)
+			tL.LogFile = "xec-log-" + tL.Alias + "-" + now + ".log"
+			o.SetLogFileFlag(tL.LogFile)
+		}
+
 		// For each TaskList add a command
 		rootCmd.AddCommand(&cobra.Command{
 			Use:   tL.Alias,
 			Short: tL.Description,
 			Args:  cobra.ArbitraryArgs,
+			PersistentPreRun: func(cmd *cobra.Command, args []string) {
+				o.SetLogFileFlag(tL.LogFile)
+				o.SetNoColorFlag(NoColor)
+				o.SetQuietFlag(Quiet)
+				o.SetDebugFlag(Debug)
+				o.SetDevFlag(Dev)
+				o.SetVerboseFlag(Verbose)
+			},
 			Run: func(cmd *cobra.Command, args []string) {
 				if tL.Parallel {
+					var wg sync.WaitGroup
 					for _, taskListTask := range taskListTasks {
 						taskListTask := taskListTask
 						wg.Add(1)
-						go xec.Execute(&wg, &taskListTask)
+						go xec.ExecuteWithWaitGroups(&wg, &taskListTask)
 					}
 					wg.Wait()
 
 				} else {
 					for _, taskListTask := range taskListTasks {
-						wg.Add(1)
-						xec.Execute(&wg, &taskListTask)
+						xec.Execute(&taskListTask)
 					}
 				}
 			},

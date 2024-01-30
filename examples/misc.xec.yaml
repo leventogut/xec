@@ -1,0 +1,65 @@
+# yaml-language-server: $schema=schema/xec-yaml-schema.json
+# # yaml-language-server: $schema=https://raw.githubusercontent.com/leventogut/xec/main/schema/xec-yaml-schema.json
+taskDefaults:
+  debug: true
+  logFile: "xec.log"
+  environment:
+    values:
+      - defaultKey: defaultValue
+      - environment: dev
+    passOn: true
+    # acceptFilterRegex:
+    #   - "XEC_*"
+    #   - "S3*"
+    #   - ""
+    # rejectFilterRegex:
+    # - "SECRET*"
+  # ignoreError: true
+tasks:
+  - alias: printenv
+    description: execute printenv, usually for debugging.
+    cmd: printenv
+    environment:
+      values:
+        - task: printenv
+        - environment2: dev2
+  - alias: ls
+    description: list all files, long format, size units
+    cmd: ls
+    args:
+      - "-al"
+      # - "-h"
+    directory: /var/log
+  - alias: lsz
+    description: ls to give error.
+    cmd: ls
+    args:
+      - "-z"
+    # ignoreError: true
+    environment:
+      values:
+        - task: printenv
+        - environment2: dev2
+  - alias: wait_10
+    cmd: ./wait_10
+  - alias: wait_5
+    cmd: ./wait_5
+taskLists:
+  - alias: lsenv
+    description: "tasklist for ls and env"
+    parallel: true
+    taskAliases:
+      - ls
+      - printenv
+    ignoreError: true
+  - alias: lszenv
+    description: "tasklist for ls and env errors"
+    taskAliases:
+      - lsz
+      - printenv
+    ignoreError: true
+  - alias: parallel
+    parallel: true
+    taskAliases:
+      - wait_10
+      - wait_5

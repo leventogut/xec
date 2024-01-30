@@ -152,6 +152,9 @@
                 },
                 "parallel": {
                     "type": "boolean"
+                },
+                "logFile": {
+                    "type": "string"
                 }
             },
             "required": [
