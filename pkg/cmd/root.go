@@ -1,11 +1,13 @@
 package cmd
 
 import (
+	"flag"
 	"fmt"
 	"leventogut/xec/pkg/output"
 	"leventogut/xec/pkg/xec"
 	"log"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -20,21 +22,21 @@ const (
 
 var (
 	o               = output.GetInstance()
-	C               xec.Config // C is config object.
-	ConfigFile      string
-	Verbose         bool         // Verbose defines the verbosity as a boolean.
-	Debug           bool         // Debug defines if debug should be enabled.
-	Dev             bool         // Dev enables development level output
-	Timeout         int    = 600 // Timeout defines the maximum time the task execution can take place.
-	NoColor         bool         // NoColor defines a boolean, when true output will not be colorized.
-	LogFile         string       // Log file name
-	Quiet           bool         // Quiet option
-	IgnoreErrorFlag bool         // Continue even if the task errors
+	C               xec.Config       // C is config object.
+	ConfigFile      string           // Custom configuration file.
+	Verbose         bool             // Verbose defines the verbosity as a boolean.
+	Debug           bool             // Debug defines if debug should be enabled.
+	Dev             bool             // Dev enables development level output
+	Timeout         int        = 600 // Timeout defines the maximum time the task execution can take place.
+	NoColor         bool             // NoColor defines a boolean, when true output will not be colorized.
+	LogFile         string           // Log file name
+	Quiet           bool             // Quiet option
+	IgnoreErrorFlag bool             // Continue even if the task errors
 )
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "xec <flags> <alias> -- [additional-arguments-to-be-passed]",
+	Use:   "xec <flags> <alias> -- [args-to-be-passed]",
 	Short: "Simple command executor.",
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
@@ -48,12 +50,12 @@ var rootCmd = &cobra.Command{
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	var err error
-
 	for _, tInstance := range C.Tasks {
 		t := tInstance
 
 		if t.Timeout == 0 {
-			if C.TaskDefaults.Timeout == 0 {
+			t.Timeout = C.TaskDefaults.Timeout
+			if t.Timeout == 0 {
 				t.Timeout = xec.DefaultTimeout
 			}
 		}
@@ -100,7 +102,8 @@ func Execute() {
 		// Add task aliases (sub-commands)
 		rootCmd.AddCommand(&cobra.Command{
 			Use:   t.Alias,
-			Short: t.Description,
+			Short: t.Cmd + strings.Join(t.Args[:], " "),
+			Long:  t.Description,
 			Args:  cobra.ArbitraryArgs,
 			PersistentPreRun: func(cmd *cobra.Command, args []string) {
 				o.SetLogFileFlag(t.LogFile)
@@ -176,7 +179,6 @@ func Execute() {
 			},
 		})
 	}
-
 	err = rootCmd.Execute()
 	if err != nil {
 		fmt.Println(err)
@@ -186,32 +188,42 @@ func Execute() {
 
 func init() {
 	// Global flags:
-	rootCmd.PersistentFlags().StringVar(&ConfigFile, "config", "", "config file (default is ~/.xec.yaml and/or $PWD/.xec.yaml)")
-	rootCmd.PersistentFlags().BoolVarP(&Dev, "dev", "z", false, "Enable development level messages.")
-	rootCmd.PersistentFlags().BoolVarP(&NoColor, "no-color", "n", false, "Disable color output. (Default is true i.e. color enabled.)")
-	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "Verbose level output.  (Default is true i.e. verbose output enabled.)")
-	rootCmd.PersistentFlags().BoolVarP(&Debug, "debug", "d", false, "Debug level output.  (Default is true i.e. debug output enabled.)")
-	rootCmd.PersistentFlags().BoolVarP(&Quiet, "quiet", "q", false, "No output.  (Default is false i.e. not quiet.)")
-	rootCmd.PersistentFlags().StringVarP(&LogFile, "log-file", "l", "", "Filename to use for logging.")
-	rootCmd.PersistentFlags().BoolVarP(&IgnoreErrorFlag, "ignore-error", "i", false, "Ignore error on tasks.")
+	rootCmd.PersistentFlags().StringVarP(&ConfigFile, "config", "", "", "config file to read (default is ~/.xec.yaml,  $PWD/.xec.yaml)")
+	rootCmd.PersistentFlags().BoolVarP(&NoColor, "no-color", "", false, "Disable color output.")
+	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "", false, "Verbose level output.")
+	rootCmd.PersistentFlags().BoolVarP(&Debug, "debug", "", false, "Debug level output.")
+	rootCmd.PersistentFlags().BoolVarP(&Quiet, "quiet", "", false, "No output except errors].")
+	rootCmd.PersistentFlags().StringVarP(&LogFile, "log-file", "", "", "Filename to use for logging.")
+	rootCmd.PersistentFlags().BoolVarP(&IgnoreErrorFlag, "ignore-error", "", false, "Ignore errors on tasks.")
 
-	viper.BindPFlag("dev", rootCmd.Flags().Lookup("dev"))
-	viper.BindPFlag("noColor", rootCmd.Flags().Lookup("no-color"))
-	viper.BindPFlag("verbose", rootCmd.Flags().Lookup("verbose"))
-	viper.BindPFlag("debug", rootCmd.Flags().Lookup("debug"))
-	viper.BindPFlag("quiet", rootCmd.Flags().Lookup("quiet"))
-	viper.BindPFlag("logFile", rootCmd.Flags().Lookup("log-file"))
-	viper.BindPFlag("ignoreErrorFlag", rootCmd.Flags().Lookup("ignore-error"))
+	flag.StringVar(&ConfigFile, "config", "", "")
+	flag.BoolVar(&NoColor, "no-color", false, "")
+	flag.BoolVar(&Verbose, "verbose", false, "")
+	flag.BoolVar(&Debug, "debug", false, "")
+	flag.BoolVar(&Quiet, "quiet", false, "")
+	flag.StringVar(&LogFile, "log-file", "", "")
+	flag.BoolVar(&IgnoreErrorFlag, "ignore-error", false, "")
+
+	viper.BindPFlags(rootCmd.PersistentFlags())
 
 	initConfig()
 }
 
 func initConfig() {
 	var err error
-	viper.SetConfigName(ConfigFileNameWithoutExtension) // name of config file (without extension)
-	viper.SetConfigType("yaml")                         // REQUIRED if the config file does not have the extension in the name
-	viper.AddConfigPath(".")                            // look for config in the working directory
-	viper.AddConfigPath("$HOME")                        // look for configs in the $HOME
+
+	flag.Parse()
+
+	if ConfigFile != "" {
+		viper.SetConfigName(ConfigFile)
+
+	} else {
+		viper.SetConfigName(ConfigFileNameWithoutExtension) // name of config file (without extension)
+	}
+
+	viper.SetConfigType("yaml")  // REQUIRED if the config file does not have the extension in the name
+	viper.AddConfigPath(".")     // look for config in the working directory
+	viper.AddConfigPath("$HOME") // look for configs in the $HOME
 
 	err = viper.ReadInConfig() // Find and read the config file
 	if err != nil {            // Handle errors reading the config file

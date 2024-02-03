@@ -94,6 +94,12 @@ func Execute(taskPointerAddress **Task) {
 	} else {
 		o.Error("Task " + t.Alias + "didn't completed.")
 	}
+	if t.RestartOnSuccess && t.Status.Success {
+		Execute(&t)
+	}
+	if t.RestartOnFailure && !t.Status.Success {
+		Execute(&t)
+	}
 	if !t.IgnoreError && t.Status.ExitCode != 0 {
 		os.Exit(t.Status.ExitCode)
 	}

@@ -21,6 +21,12 @@
                         },
                         "ignoreError": {
                             "type": "boolean"
+                        },
+                        "restartOnSuccess": {
+                            "type": "boolean"
+                        },
+                        "restartOnFailure": {
+                            "type": "boolean"
                         }
                     }
                 },
@@ -117,6 +123,12 @@
                 },
                 "directory": {
                     "type": "string"
+                },
+                "restartOnSuccess": {
+                    "type": "boolean"
+                },
+                "restartOnFailure": {
+                    "type": "boolean"
                 }
             },
             "required": [
@@ -155,6 +167,12 @@
                 },
                 "logFile": {
                     "type": "string"
+                },
+                "restartOnSuccess": {
+                    "type": "boolean"
+                },
+                "restartOnFailure": {
+                    "type": "boolean"
                 }
             },
             "required": [
