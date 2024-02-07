@@ -97,6 +97,7 @@ func Execute(taskPointerAddress **Task) {
 	if t.RestartOnSuccess && t.Status.Success {
 		Execute(&t)
 	}
+
 	if t.RestartOnFailure && !t.Status.Success {
 		Execute(&t)
 	}
