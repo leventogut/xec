@@ -1,0 +1,20 @@
+yaml-language-server: $schema=https://raw.githubusercontent.com/leventogut/xec/main/schema/xec-yaml-schema.json
+tasks:
+  - alias: printenv
+    description: execute printenv
+    cmd: printenv
+    environment:
+      values:
+        - task: printenv
+        - env: stg
+  - alias: lsz
+    description: ls to give error.
+    cmd: ls
+    args:
+      - "-z"
+taskLists:
+  - alias: lszenv
+    taskAliases:
+      - lsz
+      - printenv
+    ignoreError: false

@@ -1,0 +1,8 @@
+yaml-language-server: $schema=https://raw.githubusercontent.com/leventogut/xec/main/schema/xec-yaml-schema.json
+tasks:
+  - alias: lsz
+    description: ls to give error.
+    cmd: ls
+    args:
+      - "-z"
+    restartOnFailure: true

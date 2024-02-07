@@ -1,0 +1,6 @@
+tasks:
+  - alias: mycommand
+    cmd: echo
+    args:
+      - "my command is run"
+    description: run my command
