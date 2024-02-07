@@ -21,7 +21,7 @@ func ExecuteWithWaitGroups(wg *sync.WaitGroup, taskPointerAddress **Task) {
 	Execute(taskPointerAddress)
 }
 
-// Execute starts the defined command with it;s arguemnts.
+// Execute starts the defined command with it's arguments.
 func Execute(taskPointerAddress **Task) {
 	t := *taskPointerAddress
 	var cancel context.CancelFunc
@@ -90,9 +90,9 @@ func Execute(taskPointerAddress **Task) {
 	t.Status.ExitCode = t.Status.ExecCmd.ProcessState.ExitCode()
 
 	if t.Status.Success {
-		o.Success("Task " + t.Alias + " completed successfully")
+		o.Success("Task " + t.Alias + " completed successfully in " + taskDuration.String() + ".")
 	} else {
-		o.Error("Task " + t.Alias + "didn't completed.")
+		o.Error("Task " + t.Alias + " didn't completed.")
 	}
 	if t.RestartOnSuccess && t.Status.Success {
 		Execute(&t)

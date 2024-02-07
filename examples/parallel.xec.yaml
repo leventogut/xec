@@ -1,0 +1,19 @@
+# yaml-language-server: $schema=../schema/xec-yaml-schema.json
+# # yaml-language-server: $schema=https://raw.githubusercontent.com/leventogut/xec/main/schema/xec-yaml-schema.json
+taskDefaults:
+  logFile: "auto"
+tasks:
+  - alias: wait_10
+    cmd: sleep
+    args:
+      - "10"
+  - alias: wait_5
+    cmd: sleep
+    args:
+      - "5"
+taskLists:
+  - alias: parallel
+    parallel: true
+    taskAliases:
+      - wait_10
+      - wait_5

@@ -1,7 +1,7 @@
 # yaml-language-server: $schema=schema/xec-yaml-schema.json
 # # yaml-language-server: $schema=https://raw.githubusercontent.com/leventogut/xec/main/schema/xec-yaml-schema.json
 taskDefaults:
-  logFile: "auto"
+  logFile: "xec.log"
   environment:
     passOn: true
   ignoreError: false
@@ -13,33 +13,3 @@ tasks:
       - release
       - --snapshot
       - --clean
-  - alias: run
-    description: Run xec via "go run".
-    cmd: go
-    args:
-      - run
-      - main.go
-    environment:
-      values:
-        - XEC_ENV_KEY: XEC_ENV_VALUE
-        - XEC_SECRET_KEY: XEC_SECRET_VALUE
-  - alias: env
-    description: Print environment key/values.
-    cmd: printenv
-  - alias: ls
-    description: list files/directories
-    cmd: ls
-  - alias: wait_10
-    cmd: sleep
-    args:
-      - "10"
-  - alias: wait_5
-    cmd: sleep
-    args:
-      - "5"
-taskLists:
-  - alias: parallel
-    parallel: true
-    taskAliases:
-      - wait_10
-      - wait_5
