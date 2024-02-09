@@ -7,9 +7,15 @@ import (
 
 // Config represents the configuration read from file or env values.
 type Config struct {
+	Verbose      bool         `yaml:"verbose" json:"verbose"`
+	Debug        bool         `yaml:"debug" json:"debug"`
+	NoColor      bool         `yaml:"no-color" json:"no-color"`
+	Quiet        bool         `yaml:"quiet" json:"quiet"`
+	Imports      []string     `yaml:"imports" json:"imports"`
 	TaskDefaults TaskDefaults `yaml:"taskDefaults" json:"taskDefaults"`
 	Tasks        []*Task      `yaml:"tasks" json:"tasks"`
 	TaskLists    []*TaskList  `yaml:"taskLists" json:"taskLists"`
+	Path         string
 }
 
 // TaskDefaults defines the default values for all tasks mentioned.

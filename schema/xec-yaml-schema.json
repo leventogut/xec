@@ -2,10 +2,13 @@
     "$schema": "http://json-schema.org/draft-06/schema#",
     "$ref": "#/definitions/Xec",
     "definitions": {
-        "Xec": {
+        "xec": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
+                "imports": {
+                    "type": "array"
+                },
                 "taskDefaults": {
                     "type": "object",
                     "additionalProperties": false,
@@ -44,7 +47,7 @@
                 }
             },
             "required": [],
-            "title": "Xec"
+            "title": "xec"
         },
         "Environment": {
             "type": "object",

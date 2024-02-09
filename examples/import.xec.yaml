@@ -1,0 +1,5 @@
+# yaml-language-server: $schema=schema/xec-yaml-schema.json
+# # yaml-language-server: $schema=https://raw.githubusercontent.com/leventogut/xec/main/schema/xec-yaml-schema.json
+imports:
+  - examples/restart-on-failure.xec.yaml
+  - examples/parallel.xec.yaml

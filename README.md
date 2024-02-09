@@ -4,22 +4,23 @@
 xec is a simple command executor.
 
 Command, it's arguments and configuration of how to run it, is referred as `task`.
-xec reads a yaml based configuration file in either current directory or in home directory of the user.
-Reading configuration from the current working directory has advantages of per-project/per-task configuration structure.
+Xec reads a yaml based configuration file in either current directory and in home directory of the user. It is also possible to add another config file via `--config` argument.
+Reading configuration from the current working directory has advantages of per-project configuration structure.
 
-It allows you to control environment that is passed on to the command, such as timeout, environment values, restart behavior and so on.
+It allows you to control environment of the command execution, such as timeout, environment values, restart behavior and so on.
 
-Environment values flow can be defined, to pass or block values based on regex, also adding environment values is trivial. Also xec supports reading .env file.
+Environment values can be filtered, either to pass or block values based on regex match, also adding environment values is trivial. 
+Xec also supports reading .env file in the current directory, and reads it by default.
 
 xec has the capability of:
 
+- Dynamic sub-command help generation
 - Adding extra arguments via cli
-- Grouping tasks as task lists
+- Grouping tasks as task lists  
 - Run tasks in parallel (via task lists)
 - Restart task based on exit code, failure or success
 - Filtering and adding environment values that are passed to the command
-
-## Table of contents
+- Importing multiple configurations
 
 - [xec](#xec)
   - [Table of contents](#table-of-contents)
@@ -34,11 +35,12 @@ xec has the capability of:
   - [Build](#build)
     - [Release build](#release-build)
     - [Snapshot build](#snapshot-build)
+    - [Releasing xec](#releasing-xec)
   - [Install](#install)
 
 ## Usage
 
-To see all available aliases just enter with no alias argument.
+To see all available aliases just enter with no argument.
 
 ```bash
 ❯ xec
@@ -140,15 +142,16 @@ TaskDefaults set's all task instances, while Task level affects individual. The 
 JSON schema can be found [here](https://raw.githubusercontent.com/leventogut/xec/main/schema/xec-tasks-yaml-schema.json)
 
 ## Examples
-
-| ------------------ | ---------------------------------------------- | ------------------------------------------- |
-| Parallel execution | [documentation](examples/parallel.md)          | [code](examples/parallel.xec.yaml)          |
-| Restart on failure | [documentation](examples/restart-on-failure.md)| [code](examples/restart-on-failure.xec.yaml)|
-| Restart on success | [documentation](examples/restart-on-success.md)| [code](examples/restart-on-success.xec.yaml)|
+| Feature            | Documentation                      | Code                                         |
+|--------------------|------------------------------------|----------------------------------------------|
+| Parallel execution | [examples/parallel.md](examples/parallel.md) | [examples/parallel.xec.yaml](examples/parallel.xec.yaml)           |
+| Restart on failure | [examples/restart-on-failure.md](examples/restart-on-failure.md) | [examples/restart-on-failure.xec.yaml](examples/restart-on-failure.xec.yaml) |
+| Restart on success | [examples/restart-on-success.md](examples/restart-on-success.md) | [examples/restart-on-success.xec.yaml](examples/restart-on-success.xec.yaml) |
 
 ## Contributing
 
 Contributions are most welcome.
+Please create a feature branch and work on that. Once your feature is ready raise PR.
 
 ## Build
 
@@ -166,6 +169,16 @@ OR
 
 ```bash
 xec build
+```
+
+### Releasing xec
+
+When there is a version tag attached, build and release is automatically done.
+
+```bash
+git commit -m "doing some stuff related to ..."
+git tag -a v0.1.0 -m "First release"
+git push origin v0.1.0
 ```
 
 ## Install
