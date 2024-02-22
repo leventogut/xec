@@ -1,5 +1,5 @@
 <!-- vale Microsoft.HeadingAcronyms = NO -->
-# xec
+# xec a simple command executor
 
 xec is a simple command executor.
 
@@ -22,15 +22,15 @@ xec has the capability of:
 - Filtering and adding environment values that are passed to the command
 - Importing multiple configurations
 
-- [xec](#xec)
-  - [Table of contents](#table-of-contents)
+
+- [xec a simple command executor](#xec-a-simple-command-executor)
   - [Usage](#usage)
   - [Defaults](#defaults)
-    - [Parallelism](#parallelism)
+  - [Initial configuration](#initial-configuration)
+  - [Examples](#examples)
   - [Anatomy of a task](#anatomy-of-a-task)
   - [Error handling of tasks](#error-handling-of-tasks)
   - [Writing configuration files (schema)](#writing-configuration-files-schema)
-  - [Examples](#examples)
   - [Contributing](#contributing)
   - [Build](#build)
     - [Release build](#release-build)
@@ -40,22 +40,22 @@ xec has the capability of:
 
 ## Usage
 
-To see all available aliases just enter with no argument.
+To see all available aliases just enter with no argument, it will read all configurations and generate the sub-commands/aliases.
 
 ```bash
-❯ xec
+❯ xec                                                                                                                                                                                   xec on  main [!?] via 🐳 desktop-linux via 🐹 v1.20.4 with unknown env 
 Simple command executor.
 
 Usage:
-  xec <flags> <alias> -- [args-to-be-passed] [flags]
+  xec <flags> <alias> -- [additional-args] [flags]
   xec [command]
 
 Available Commands:
+  build       goreleaser release --snapshot --clean
   completion  Generate the autocompletion script for the specified shell
+  env         printenv 
   help        Help about any command
-  lsz         ls-z
-  lszenv      
-  printenv    printenv
+  init        initialize a configuration file in the current directory.
   version     Print the version number
 
 Flags:
@@ -74,13 +74,13 @@ exit status 1
 
 To run a task, just enter name of the alias (and additional parameters if required).
 
-Arguments after "--" is appended to the tasks' config arguments.
-
 ```bash
 xec myls
 ```
 
-Or a more advanced usage:
+Arguments after "--" is appended to the tasks' config arguments.
+
+An example with additional arguments:
 
 ```bash
 xec --ignore-errors myls -- -h
@@ -88,21 +88,32 @@ xec --ignore-errors myls -- -h
 
 ## Defaults
 
+- Verbose: false
+- Debug: false
+- Config: ""
+- NoColor: false
+- Quiet: false
 - IgnoreErrors: false
 - Timeout: Timeout for a task. -> 10 minutes.
 
-### Parallelism
+## Initial configuration
 
-TaskList has the option `parallel`, when set to true xec will run the tasks in parallel.
+An initial, skeleton configuration can be created via:
 
-```yaml
-taskLists:
-  - alias: parallel
-    parallel: true
-    taskNames:
-      - wait_10
-      - wait_5
+```bash
+❯ xec init                                                                                                                                                                              xec on  main [✘!?] via 🐳 desktop-linux via 🐹 v1.20.4 with unknown env 
+2024-02-10T21:33:54+01:00 | [SUCCESS] | Init configuration is written to file .xec.yaml.
 ```
+# Examples
+
+| Feature               | Documentation                                                    | Code                                                                         |
+|-----------------------|------------------------------------------------------------------|------------------------------------------------------------------------------|
+| Simple                | [examples/simple.md](examples/parallel.md)                       | [examples/simple.xec.yaml](examples/parallel.xec.yaml)                       |
+| Parallel execution    | [examples/parallel.md](examples/parallel.md)                     | [examples/parallel.xec.yaml](examples/parallel.xec.yaml)                     |
+| Ignore error          | [examples/ignore-error.md](examples/parallel.md)                 | [examples/ignore-error.xec.yaml](examples/parallel.xec.yaml)                 |
+| Restart on failure    | [examples/restart-on-failure.md](examples/restart-on-failure.md) | [examples/restart-on-failure.xec.yaml](examples/restart-on-failure.xec.yaml) |
+| Restart on success    | [examples/restart-on-success.md](examples/restart-on-success.md) | [examples/restart-on-success.xec.yaml](examples/restart-on-success.xec.yaml) |
+| Import Configurations | [examples/import.md](examples/restart-on-success.md)             | [examples/import.xec.yaml](examples/restart-on-success.xec.yaml)             |
 
 ## Anatomy of a task
 
@@ -130,23 +141,20 @@ tasks:
     debug: true # Enable debug on Xec about this task.
     logFile: "myls.log" # Log to this file.
     ignoreError: true # Ignore if task is errored.
+    restartOnSuccess: false
+    restartOnFailure: false
 ```
 
 ## Error handling of tasks
 
-You can ignore (and continue) errored tasks. This can be achieved in three levels, TaskDefaults, Task, TaskLists.
+You can ignore (and continue) an errored tasks. This can be achieved in three levels, TaskDefaults, Task, TaskLists.
 TaskDefaults set's all task instances, while Task level affects individual. The other level affects TaskList which affects all tasks in the task list.
+
+Restarting the task based on the exit code is supported as well, with restartOnSuccess and restartOnFailure
 
 ## Writing configuration files (schema)
 
 JSON schema can be found [here](https://raw.githubusercontent.com/leventogut/xec/main/schema/xec-tasks-yaml-schema.json)
-
-## Examples
-| Feature            | Documentation                      | Code                                         |
-|--------------------|------------------------------------|----------------------------------------------|
-| Parallel execution | [examples/parallel.md](examples/parallel.md) | [examples/parallel.xec.yaml](examples/parallel.xec.yaml)           |
-| Restart on failure | [examples/restart-on-failure.md](examples/restart-on-failure.md) | [examples/restart-on-failure.xec.yaml](examples/restart-on-failure.xec.yaml) |
-| Restart on success | [examples/restart-on-success.md](examples/restart-on-success.md) | [examples/restart-on-success.xec.yaml](examples/restart-on-success.xec.yaml) |
 
 ## Contributing
 
@@ -180,5 +188,3 @@ git commit -m "doing some stuff related to ..."
 git tag -a v0.1.0 -m "First release"
 git push origin v0.1.0
 ```
-
-## Install

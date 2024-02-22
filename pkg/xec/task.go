@@ -2,9 +2,8 @@ package xec
 
 import (
 	"context"
-	"fmt"
+	"github.com/leventogut/xec/pkg/output"
 	"io"
-	"leventogut/xec/pkg/output"
 	"os"
 	"os/exec"
 	"sync"
@@ -21,7 +20,7 @@ func ExecuteWithWaitGroups(wg *sync.WaitGroup, taskPointerAddress **Task) {
 	Execute(taskPointerAddress)
 }
 
-// Execute starts the defined command with it's arguments.
+// Execute starts the defined command with its arguments.
 func Execute(taskPointerAddress **Task) {
 	t := *taskPointerAddress
 	var cancel context.CancelFunc
@@ -52,7 +51,7 @@ func Execute(taskPointerAddress **Task) {
 
 		logFile, err = os.OpenFile(t.LogFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
-			o.Error(fmt.Sprintf("Can't open log file %+v - Error: %+v\n", t.LogFile, err))
+			o.Error("Can't open log file %+v - Error: %+v\n", t.LogFile, err)
 		}
 		defer logFile.Close()
 
@@ -70,13 +69,14 @@ func Execute(taskPointerAddress **Task) {
 
 	}
 
-	o.Info("Task " + t.Alias + " is starting")
+	o.Info("Task %+v is starting.", t.Alias)
+	o.Info("Task %+v is logged to %+v", t.Alias, t.LogFile)
 	t.Status.Started = true
 	taskStartTime := time.Now()
 
 	// Execute command
 	if err := t.Status.ExecCmd.Run(); err != nil {
-		o.Error(fmt.Sprintf("Error: %+v\n", err))
+		o.Error("Task couldn't be executed, Error: %+v\n", err)
 		t.Status.Success = false
 	} else {
 		t.Status.Success = true
@@ -92,7 +92,7 @@ func Execute(taskPointerAddress **Task) {
 	if t.Status.Success {
 		o.Success("Task " + t.Alias + " completed successfully in " + taskDuration.String() + ".")
 	} else {
-		o.Error("Task " + t.Alias + " didn't completed.")
+		o.Error("Task " + t.Alias + " didn't complete successfully.")
 	}
 	if t.RestartOnSuccess && t.Status.Success {
 		Execute(&t)

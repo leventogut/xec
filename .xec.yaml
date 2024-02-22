@@ -3,10 +3,14 @@
 #imports:
 #  - examples/restart-on-failure.xec.yaml
 #  - examples/parallel.xec.yaml
+verbose: true
+debug: true
+logDir: ./log
+logFile: "auto" # "xec.log"
 taskDefaults:
-  logFile: "xec.log"
   environment:
     passOn: true
+#  logFile: "xec-taskDefaults.log"
   ignoreError: false
 tasks:
   - alias: build
@@ -16,3 +20,27 @@ tasks:
       - release
       - --snapshot
       - --clean
+  - alias: echo_5
+    cmd: echo
+    args:
+      - "5"
+  - alias: wait_1
+    cmd: sleep
+    args:
+      - "1"
+#    logFile: "xec-task.log"
+  - alias: wait_3
+    cmd: sleep
+    args:
+      - "3"
+  - alias: wait_12
+    cmd: sleep
+    args:
+      - "1"
+taskLists:
+  - alias: wait
+    parallel: true
+    taskAliases:
+      - wait_1
+      - wait_3
+    logFile: "parallel.log"

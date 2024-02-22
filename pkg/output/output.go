@@ -19,8 +19,6 @@ type Output interface {
 	SetLogFile(f string)
 	QuietFlag() bool
 	SetQuietFlag(b bool)
-	DevFlag() bool
-	SetDevFlag(b bool)
 	DebugFlag() bool
 	SetDebugFlag(b bool)
 	VerboseFlag() bool
@@ -34,7 +32,6 @@ type output struct {
 	quiet   bool
 	debug   bool
 	color   *color.Color
-	dev     bool
 	verbose bool
 }
 
@@ -51,7 +48,6 @@ func NewOutput(noColor bool, logFile string, quiet bool, debug bool, dev bool, v
 		logFile: logFile,
 		quiet:   quiet,
 		debug:   debug,
-		dev:     dev,
 		verbose: verbose,
 	}
 }
@@ -67,17 +63,13 @@ func GetInstance() *output {
 	return L
 }
 func (o *output) setLogFile() {
-	once.Do(func() {
-		// Log to file if logFile is set
-		if o.logFile != "" {
-			logFile, err := os.OpenFile(L.logFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
-			if err != nil {
-				log.Fatalf("Can't open log file:  %v", err)
-			}
-			o.writers = append(o.writers, logFile)
+	if o.logFile != "" {
+		logFile, err := os.OpenFile(L.logFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+		if err != nil {
+			log.Fatalf("Can't open log file:  %v", err)
 		}
-
-	})
+		o.writers = append(o.writers, logFile)
+	}
 }
 func (o *output) NoColorFlag() bool {
 	return o.noColor
@@ -98,12 +90,6 @@ func (o *output) QuietFlag() bool {
 func (o *output) SetQuietFlag(b bool) {
 	o.quiet = b
 }
-func (o *output) DevFlag() bool {
-	return o.dev
-}
-func (o *output) SetDevFlag(b bool) {
-	o.dev = b
-}
 func (o *output) DebugFlag() bool {
 	return o.debug
 }
@@ -116,42 +102,39 @@ func (o *output) VerboseFlag() bool {
 func (o *output) SetVerboseFlag(b bool) {
 	o.verbose = b
 }
-func (o *output) Dev(m string) {
-	o.Output(m, "dev")
-}
-func (o *output) Debug(m string) {
-	o.Output(m, "debug")
+func (o *output) Debug(m string, values ...interface{}) {
+	o.Output(m, "debug", values...)
 }
 
-func (o *output) Fatal(m string) {
-	o.Output(m, "fatal")
+func (o *output) Fatal(m string, values ...interface{}) {
+	o.Output(m, "fatal", values...)
 	os.Exit(1)
 }
 
-func (o *output) Error(m string) {
-	o.Output(m, "error")
+func (o *output) Error(m string, values ...interface{}) {
+	o.Output(m, "error", values...)
 }
 
-func (o *output) Warning(m string) {
-	o.Output(m, "warning")
+func (o *output) Warning(m string, values ...interface{}) {
+	o.Output(m, "warning", values...)
 }
 
-func (o *output) Info(m string) {
-	o.Output(m, "info")
+func (o *output) Info(m string, values ...interface{}) {
+	o.Output(m, "info", values...)
 }
 
-func (o *output) Success(m string) {
-	o.Output(m, "success")
+func (o *output) Success(m string, values ...interface{}) {
+	o.Output(m, "success", values...)
 }
 
 // Output receives two strings (severity and message and outputs to stdout or
-func (o *output) Output(message string, outputType string, writers ...[]io.Writer) {
+func (o *output) Output(message string, outputType string, values ...interface{}) {
 	debugColor := color.FgYellow
 	fatalColor := color.FgRed
 	errorColor := color.FgRed
-	warningColor := color.FgHiYellow
+	warningColor := color.FgYellow
 	infoColor := color.FgHiBlue
-	successColor := color.FgHiGreen
+	successColor := color.FgGreen
 
 	color.Unset()
 	defer color.Unset()
@@ -179,21 +162,29 @@ func (o *output) Output(message string, outputType string, writers ...[]io.Write
 	if !o.quiet {
 		if outputType == "error" || outputType == "fatal" {
 			w = true
-		} else if outputType == "debug" && o.debug {
+		} else if o.debug {
 			w = true
-		} else if (outputType == "info" || outputType == "warning") && o.verbose {
+		} else if outputType == "info" && o.verbose {
+			w = true
+		} else if outputType == "warning" && o.verbose {
 			w = true
 		} else if outputType == "success" {
 			w = true
+		} else {
+			w = false
 		}
 	}
 
 	if w {
 		now := time.Now().Format(time.RFC3339)
 
-		_, err := o.write(now + " | " + "[" + strings.ToUpper(outputType) + "]" + " | " + message)
+		messageResult := now + " | " + strings.ToUpper(outputType) + " | " + message
+		_, err := o.write(fmt.Sprintf(messageResult, values...))
 		if err != nil {
-			fmt.Printf("err: %v", err)
+			fmt.Printf("Couldn't write log line, error: %+v\n", err)
+		}
+		if outputType == "fatal" {
+			os.Exit(1)
 		}
 	}
 }
@@ -203,6 +194,9 @@ func (o *output) write(s string) (n int, err error) {
 		defer logFile.Close()
 	}
 	for _, writer := range o.writers {
+		if o.logFile != "" {
+			o.color.DisableColor()
+		}
 		_, err = o.color.Fprintf(writer, s+"\n")
 		if err != nil {
 			fmt.Printf("err: %v", err)

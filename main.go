@@ -1,7 +1,7 @@
 package main
 
 import (
-	"leventogut/xec/pkg/cmd"
+	"github.com/leventogut/xec/pkg/cmd"
 
 	"github.com/joho/godotenv"
 )

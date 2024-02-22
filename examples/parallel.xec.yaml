@@ -7,9 +7,14 @@ tasks:
     cmd: sleep
     args:
       - "3"
+  - alias: wait_1
+    cmd: sleep
+    args:
+      - "1"
 taskLists:
   - alias: parallel
     parallel: true
     taskAliases:
       - wait_10
       - wait_3
+      - wait_1

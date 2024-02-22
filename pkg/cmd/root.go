@@ -4,8 +4,8 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"leventogut/xec/pkg/output"
-	"leventogut/xec/pkg/xec"
+	"github.com/leventogut/xec/pkg/output"
+	"github.com/leventogut/xec/pkg/xec"
 	"log"
 	"os"
 	"path/filepath"
@@ -18,32 +18,31 @@ import (
 )
 
 const (
-	AppName                               = "xec"  // AppName is the name of the application
-	DefaultConfigFileNameWithoutExtension = ".xec" // DefaultConfigFileNameWithoutExtension is the name of the config file
+	AppName                                      = "xec"  // AppName is the name of the application
+	DefaultConfigFileNameWithoutExtension        = ".xec" // DefaultConfigFileNameWithoutExtension is the name of the config file
+	DefaultConfigExtension                string = "yaml" // DefaultConfigExtension is the extension used by default
+	DefaultConfigFileNameWithExtension    string = DefaultConfigFileNameWithoutExtension + "." + DefaultConfigExtension
 )
 
 var (
-	o = output.GetInstance()
-	// C                                  xec.Config // C is config object.
-	Configs                            []*xec.Config
-	ConfigFileFlag                     string       // Custom configuration file.
-	Verbose                            bool         // Verbose defines the verbosity as a boolean.
-	Debug                              bool         // Debug defines if debug should be enabled.
-	Dev                                bool         // Dev enables development level output
-	Timeout                            int    = 600 // Timeout defines the maximum time the task execution can take place.
-	NoColor                            bool         // NoColor defines a boolean, when true output will not be colorized.
-	LogFile                            string       // Log file name
-	Quiet                              bool         // Quiet option
-	IgnoreErrorFlag                    bool         // Continue even if the task errors
-	DefaultConfigFileNameWithExtension string = ".xec.yaml"
-	DefaultConfigExtension             string = "yaml"
-	FlagSet                            *flag.FlagSet
-	InitConfiguration                  string = `tasks:
+	o                 = output.GetInstance()
+	Configs           []*xec.Config
+	ConfigFileFlag    string = ""    // Custom configuration file.
+	Verbose           bool   = true  // Verbose defines the verbosity as a boolean.
+	Debug             bool   = false // Debug defines if debug should be enabled.
+	Quiet             bool   = false // Quiet option nes the maximum time the task execution can take place.
+	NoColor           bool   = false // NoColor defines a boolean, when true output will not be colorized.
+	LogDir            string = ""    // LogDir is the destination directory for log files.
+	LogFile           string = ""    // Log file name
+	IgnoreErrorFlag   bool   = false // Continue even if the task errors
+	Timeout           int    = 600   // Timeout for tasks' execution context.
+	tLogFile          string = ""
+	InitConfiguration string = `tasks:
   - alias: myCommand
     cmd: echo
     args:
       - "my command is run"
-    description: run it via: xec myCommand
+    description: run it via xec myCommand
 `
 )
 
@@ -63,6 +62,10 @@ var rootCmd = &cobra.Command{
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	var err error
+	o.SetVerboseFlag(Verbose)
+	o.SetDebugFlag(Debug)
+	o.SetQuietFlag(Quiet)
+	o.SetNoColorFlag(NoColor)
 
 	for _, C := range Configs {
 		for _, tInstance := range C.Tasks {
@@ -95,23 +98,21 @@ func Execute() {
 
 			t.Environment.Values = append(t.Environment.Values, C.TaskDefaults.Environment.Values...)
 
-			if t.Timeout == 0 {
-				if C.TaskDefaults.Timeout != 0 {
-					t.Timeout = C.TaskDefaults.Timeout
-				} else {
-					t.Timeout = xec.DefaultTimeout
-				}
-			}
+			if t.LogFile != "" {
 
-			// --log-file overrides taskDefaults and task logFile, task overrides taskDefaults
-			if t.LogFile == "" {
+			} else if C.TaskDefaults.LogFile != "" {
 				t.LogFile = C.TaskDefaults.LogFile
+			} else if C.LogFile != "" {
+				t.LogFile = C.LogFile
 			}
 
 			if t.LogFile == "auto" {
 				now := time.Now().Format(time.RFC3339Nano)
 				t.LogFile = "xec-log-" + t.Alias + "-" + now + ".log"
-				o.SetLogFileFlag(t.LogFile)
+			}
+
+			if t.LogFile != "" {
+				t.LogFile = LogDir + t.LogFile
 			}
 
 			// Add task aliases (sub-commands)
@@ -121,12 +122,9 @@ func Execute() {
 				Long:  t.Description,
 				Args:  cobra.ArbitraryArgs,
 				PersistentPreRun: func(cmd *cobra.Command, args []string) {
-					o.SetLogFileFlag(t.LogFile)
-					o.SetNoColorFlag(NoColor)
-					o.SetQuietFlag(Quiet)
-					o.SetDebugFlag(Debug)
-					o.SetDevFlag(Dev)
-					o.SetVerboseFlag(Verbose)
+					if t.LogFile != "" {
+						o.SetLogFileFlag(t.LogFile)
+					}
 				},
 				Run: func(cmd *cobra.Command, args []string) {
 					xec.Execute(&t)
@@ -139,28 +137,16 @@ func Execute() {
 			// Find tasks from TaskList that matches by alias
 			var taskListTasks []*xec.Task
 			for _, taskName := range tL.TaskAliases {
-				// Find tasks pointer address
 				for _, tInstance := range C.Tasks {
 					t := tInstance
 					if taskName == t.Alias {
+						// Properties to be transferred from task list to task
 						if tL.IgnoreError {
 							tInstance.IgnoreError = true
-						}
-						if tL.LogFile != "" {
-							tInstance.LogFile = tL.LogFile
-						}
-						if tInstance.LogFile == "" {
-							tInstance.LogFile = C.TaskDefaults.LogFile
 						}
 						taskListTasks = append(taskListTasks, t)
 					}
 				}
-			}
-
-			if tL.LogFile == "auto" {
-				now := time.Now().Format(time.RFC3339Nano)
-				tL.LogFile = "xec-log-" + tL.Alias + "-" + now + ".log"
-				o.SetLogFileFlag(tL.LogFile)
 			}
 
 			// For each TaskList add a command
@@ -169,15 +155,14 @@ func Execute() {
 				Short: tL.Description,
 				Args:  cobra.ArbitraryArgs,
 				PersistentPreRun: func(cmd *cobra.Command, args []string) {
-					o.SetLogFileFlag(tL.LogFile)
-					o.SetNoColorFlag(NoColor)
-					o.SetQuietFlag(Quiet)
-					o.SetDebugFlag(Debug)
-					o.SetDevFlag(Dev)
-					o.SetVerboseFlag(Verbose)
+					if tL.LogFile != "" {
+						o.SetLogFileFlag(tL.LogFile)
+					}
+
 				},
 				Run: func(cmd *cobra.Command, args []string) {
 					taskListStartTime := time.Now()
+					o.Info("TaskList %+v is starting.", tL.Alias)
 					if tL.Parallel {
 						var wg sync.WaitGroup
 
@@ -215,22 +200,36 @@ func init() {
 	rootCmd.PersistentFlags().BoolVarP(&Debug, "debug", "", false, "Debug level output.")
 	rootCmd.PersistentFlags().BoolVarP(&Quiet, "quiet", "", false, "No output except errors].")
 	rootCmd.PersistentFlags().StringVarP(&LogFile, "log-file", "", "", "Filename to use for logging.")
+	rootCmd.PersistentFlags().StringVarP(&LogDir, "log-dir", "", "", "Directory to use for logging.")
 	rootCmd.PersistentFlags().BoolVarP(&IgnoreErrorFlag, "ignore-error", "", false, "Ignore errors on tasks.")
 
-	// Flag package is used due to the fact that Cobra loads flag values quite late
+	// Flag package is used due to the fact that Cobra loads flag values quite late.
 	// Only reading values and updating global vars is used.
-	//FlagSet = flag.NewFlagSet("xec-flag-set", flag.ContinueOnError)
 	flag.StringVar(&ConfigFileFlag, "config", "", "")
 	flag.BoolVar(&NoColor, "no-color", false, "")
 	flag.BoolVar(&Verbose, "verbose", false, "")
 	flag.BoolVar(&Debug, "debug", false, "")
 	flag.BoolVar(&Quiet, "quiet", false, "")
 	flag.StringVar(&LogFile, "log-file", "", "")
+	flag.StringVar(&LogDir, "log-dir", "", "")
 	flag.BoolVar(&IgnoreErrorFlag, "ignore-error", false, "")
 
 	_ = viper.BindPFlags(rootCmd.PersistentFlags())
 
+	rootCmd.AddCommand(&cobra.Command{
+		Use:   "init",
+		Short: "initialize a configuration file in the current directory.",
+		Args:  cobra.ArbitraryArgs,
+		Run: func(cmd *cobra.Command, args []string) {
+			initConfigFile("./" + DefaultConfigFileNameWithoutExtension + "." + DefaultConfigExtension)
+		},
+	})
+
 	initConfig()
+
+	if Debug {
+		Verbose = true
+	}
 }
 
 func initConfig() {
@@ -241,16 +240,19 @@ func initConfig() {
 		extension := strings.TrimPrefix(filepath.Ext(ConfigFileFlag), ".")
 		configName := strings.TrimSuffix(filepath.Base(ConfigFileFlag), filepath.Ext(ConfigFileFlag))
 		path := filepath.Dir(ConfigFileFlag)
-		ConfigFileFlagWithoutExtension := strings.TrimSuffix(ConfigFileFlag, filepath.Ext(ConfigFileFlag))
-		initConfigFile(ConfigFileFlagWithoutExtension + "." + extension)
 		CreateViperInstanceFromConfig(path, configName, extension)
 	}
 	// home directory
 	CreateViperInstanceFromConfig("$HOME", DefaultConfigFileNameWithoutExtension, DefaultConfigExtension)
 
 	// current working directory
-	initConfigFile(DefaultConfigFileNameWithoutExtension + "." + DefaultConfigExtension)
 	CreateViperInstanceFromConfig(".", DefaultConfigFileNameWithoutExtension, DefaultConfigExtension)
+
+	if len(Configs) < 1 {
+		o.Warning("No configuration file found.")
+
+		o.Warning("You can generate a skeleton configuration via: %s init", AppName)
+	}
 }
 
 func CreateViperInstanceFromConfig(path string, configName string, extension string) {
@@ -258,23 +260,43 @@ func CreateViperInstanceFromConfig(path string, configName string, extension str
 	if extension == "" {
 		extension = DefaultConfigExtension
 	}
-	fmt.Printf("path: %+v\nconfig: %+v\n extension: %+v\n", path, configName, extension)
 
 	viperInstance := viper.New()
 	viperInstance.SetConfigName(configName) // name of config file (without extension)
 	viperInstance.SetConfigType(extension)  // REQUIRED if the config file does not have the extension in the name
 	viperInstance.AddConfigPath(path)       // look for config in the working directory
 
+	o.Debug("Trying to read config file, [%v/%v.%v].", path, configName, extension)
+
 	err = viperInstance.ReadInConfig() // Find and read the config file
 	if err != nil {                    // Handle errors reading the config file
-		panic(fmt.Errorf("fatal error when reading config file: %w", err))
+		o.Warning("Can't read config file, [%v/%v.%v], skipping", path, configName, extension)
+		return
 	}
+
+	o.Success("Loaded config file, [%v/%v.%v]", path, configName, extension)
 
 	var config *xec.Config
 
 	err = viperInstance.Unmarshal(&config)
 	Configs = append(Configs, config)
 
+	// Root variables form config
+	if config.Verbose {
+		Verbose = true
+	}
+	if config.Debug {
+		Debug = true
+	}
+	if config.NoColor {
+		NoColor = true
+	}
+	if config.Quiet {
+		Quiet = true
+	}
+	if config.LogDir != "" {
+		LogDir = strings.TrimSuffix(config.LogDir, "/") + "/"
+	}
 	for _, importConfig := range config.Imports {
 		importConfigConfigName := strings.TrimSuffix(filepath.Base(importConfig), filepath.Ext(importConfig))
 		importConfigExtension := strings.TrimPrefix(filepath.Ext(importConfig), ".")
@@ -290,15 +312,15 @@ func CreateViperInstanceFromConfig(path string, configName string, extension str
 // If the file doesn't exist, creates it.
 func initConfigFile(fileName string) {
 	if _, err := os.Stat(fileName); errors.Is(err, os.ErrNotExist) {
-		o.Info(fmt.Sprintf("Configuration file [%+v] not found.\n", fileName))
+		o.Info("Configuration file [%+v] not found.\n", fileName)
 		configFile, err := os.OpenFile(fileName, os.O_RDWR|os.O_CREATE, 0644)
 		if err != nil {
-			log.Fatalf("Can't open configuration file: %v, error:  %v\n", configFile, err)
+			o.Fatal("Can't open configuration file: %v, error:  %v\n", fileName, err)
 		}
 		_, err = configFile.WriteString(InitConfiguration)
 		if err != nil {
-			log.Fatalf("Can't write to file, error:  %v\n", err)
+			o.Fatal("Can't write to file, error:  %v\n", err)
 		}
-		o.Success(fmt.Sprintf("Init configuration is written to file %v.\n", fileName))
+		o.Success("Init configuration is written to file %v.", fileName)
 	}
 }

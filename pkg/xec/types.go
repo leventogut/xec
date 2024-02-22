@@ -11,6 +11,8 @@ type Config struct {
 	Debug        bool         `yaml:"debug" json:"debug"`
 	NoColor      bool         `yaml:"no-color" json:"no-color"`
 	Quiet        bool         `yaml:"quiet" json:"quiet"`
+	LogFile      string       `yaml:"logFile" json:"logFile"`
+	LogDir       string       `yaml:"logDir" json:"logDir"`
 	Imports      []string     `yaml:"imports" json:"imports"`
 	TaskDefaults TaskDefaults `yaml:"taskDefaults" json:"taskDefaults"`
 	Tasks        []*Task      `yaml:"tasks" json:"tasks"`
@@ -20,7 +22,6 @@ type Config struct {
 
 // TaskDefaults defines the default values for all tasks mentioned.
 type TaskDefaults struct {
-	Debug       bool        `yaml:"debug" json:"debug"`
 	Timeout     int         `yaml:"timeout" json:"timeout"`
 	Environment Environment `yaml:"environment" json:"environment"`
 	LogFile     string      `yaml:"logFile" json:"logFile"`
@@ -37,6 +38,7 @@ type Task struct {
 	Timeout          int         `yaml:"timeout" json:"timeout"`
 	Environment      Environment `yaml:"environment" json:"environment"`
 	LogFile          string      `yaml:"logFile" json:"logFile"`
+	LogDir           string      `yaml:"logDir" json:"logDir"`
 	IgnoreError      bool        `yaml:"ignoreError" json:"ignoreError"`
 	RestartOnSuccess bool        `yaml:"restartOnSuccess" json:"restartOnSuccess"`
 	RestartOnFailure bool        `yaml:"restartOnFailure" json:"restartOnFailure"`
