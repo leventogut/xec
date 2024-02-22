@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/charmbracelet/huh/spinner"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -127,7 +128,13 @@ func Execute() {
 					}
 				},
 				Run: func(cmd *cobra.Command, args []string) {
-					xec.Execute(&t)
+					executeTask := func() {
+						xec.Execute(&t)
+					}
+					_ = spinner.New().
+						Title("Task " + t.Alias + " is running.").
+						Action(executeTask).
+						Run()
 				},
 			})
 		}
@@ -142,12 +149,26 @@ func Execute() {
 					if taskName == t.Alias {
 						// Properties to be transferred from task list to task
 						if tL.IgnoreError {
-							tInstance.IgnoreError = true
+							t.IgnoreError = true
 						}
+						if tL.LogFile != "" {
+						} else if C.TaskDefaults.LogFile != "" {
+							tL.LogFile = C.TaskDefaults.LogFile
+						} else if C.LogFile != "" {
+							tL.LogFile = C.LogFile
+						}
+
+						if tL.LogFile == "auto" {
+							now := time.Now().Format(time.RFC3339Nano)
+							tL.LogFile = "xec-log-" + tL.Alias + "-" + now + ".log"
+						}
+
+						t.LogFile = LogDir + tL.LogFile
 						taskListTasks = append(taskListTasks, t)
 					}
 				}
 			}
+			tL.LogFile = LogDir + tL.LogFile
 
 			// For each TaskList add a command
 			rootCmd.AddCommand(&cobra.Command{
@@ -162,7 +183,8 @@ func Execute() {
 				},
 				Run: func(cmd *cobra.Command, args []string) {
 					taskListStartTime := time.Now()
-					o.Info("TaskList %+v is starting.", tL.Alias)
+					o.Info("Task list %+v is starting.", tL.Alias)
+					o.Info("Task list %+v is logged to %+v.", tL.Alias, tL.LogFile)
 					if tL.Parallel {
 						var wg sync.WaitGroup
 
@@ -175,12 +197,19 @@ func Execute() {
 
 					} else {
 						for _, taskListTask := range taskListTasks {
-							xec.Execute(&taskListTask)
+
+							executeTask := func() {
+								xec.Execute(&taskListTask)
+							}
+							_ = spinner.New().
+								Title("Task " + taskListTask.Alias + " is running.").
+								Action(executeTask).
+								Run()
 						}
 					}
 					taskListFinishTime := time.Now()
 					taskDuration := taskListFinishTime.Sub(taskListStartTime)
-					o.Success("TaskList " + tL.Alias + " finished in " + taskDuration.String() + ".")
+					o.Success("Task list " + tL.Alias + " finished in " + taskDuration.String() + ".")
 				},
 			})
 		}
