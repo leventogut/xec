@@ -1,5 +1,4 @@
-# yaml-language-server: $schema=schema/xec-yaml-schema.json
-# # yaml-language-server: $schema=https://raw.githubusercontent.com/leventogut/xec/main/schema/xec-yaml-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/leventogut/xec/main/schema/xec-yaml-schema.json
 taskDefaults:
   debug: true
   logFile: "xec.log"
