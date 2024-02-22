@@ -58,9 +58,7 @@
                     }
                 }
             },
-            "required": [
-                "tasks"
-            ],
+            "required": [],
             "title": "xec"
         },
         "Environment": {
