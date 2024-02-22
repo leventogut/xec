@@ -24,6 +24,7 @@ xec has the capability of:
 
 
 - [xec a simple command executor](#xec-a-simple-command-executor)
+  - [Installation](#installation)
   - [Usage](#usage)
   - [Defaults](#defaults)
   - [Dependencies](#dependencies)
@@ -37,7 +38,44 @@ xec has the capability of:
     - [Release build](#release-build)
     - [Snapshot build](#snapshot-build)
     - [Releasing xec](#releasing-xec)
-  - [Install](#install)
+
+## Installation
+
+### Pre-built binaries
+
+Visit the [releases page](https://github.com/leventogut/xec/releases) or [latest release page](https://github.com/leventogut/xec/releases/latest).
+
+#### Linux and Darwin
+
+```bash
+# set the version
+export XEC_VERSION=v0.0.10
+# Download the archive suits to your OS and architecture.
+curl -L -o xec.tar.gz https://github.com/leventogut/xec/releases/download/${XEC_VERSION}/xec_Linux_x86_64.tar.gz
+# Extract the archive
+tar -xzvf xec.tar.gz
+# Move the binary (might need root/sudo, depending on the path)
+mv xec /usr/local/bin
+```
+
+#### Verification
+
+```bash
+# Set the version
+export XEC_VERSION=v0.0.10
+# Download checksums file
+curl -L -o xec_checksums.txt https://github.com/leventogut/xec/releases/download/${XEC_VERSION}/xec_${XEC_VERSION}_checksums.txt
+# Get checksum
+sha256sum xec.tar.gz
+# Compare the checksum from the file
+```
+
+
+### Go
+
+```bash
+go install github.com/leventogut/xec 
+```
 
 ## Usage
 
