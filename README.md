@@ -14,7 +14,7 @@ Xec also supports reading .env file in the current directory, and reads it by de
 
 xec has the capability of:
 
-- Dynamic sub-command help generation
+- Dynamic sub-command generation based on the aliases of tasks
 - Adding extra arguments via cli
 - Grouping tasks as task lists  
 - Run tasks in parallel (via task lists)
@@ -26,6 +26,7 @@ xec has the capability of:
 - [xec a simple command executor](#xec-a-simple-command-executor)
   - [Usage](#usage)
   - [Defaults](#defaults)
+  - [Dependencies](#dependencies)
   - [Initial configuration](#initial-configuration)
   - [Examples](#examples)
   - [Anatomy of a task](#anatomy-of-a-task)
@@ -41,6 +42,9 @@ xec has the capability of:
 ## Usage
 
 To see all available aliases just enter with no argument, it will read all configurations and generate the sub-commands/aliases.
+In the following output `build` and `env` are aliases available.
+
+Description of an alias command constitutes the command to be run and its arguments.
 
 ```bash
 ❯ xec                                                                                                                                                                                   xec on  main [!?] via 🐳 desktop-linux via 🐹 v1.20.4 with unknown env 
@@ -72,6 +76,8 @@ Use "xec [command] --help" for more information about a command.
 exit status 1
 ```
 
+If no arguments are given, it exits with an exit code of 1.
+
 To run a task, just enter name of the alias (and additional parameters if required).
 
 ```bash
@@ -88,13 +94,17 @@ xec --ignore-errors myls -- -h
 
 ## Defaults
 
-- Verbose: false
+- Verbose: true
 - Debug: false
 - Config: ""
 - NoColor: false
 - Quiet: false
 - IgnoreErrors: false
-- Timeout: Timeout for a task. -> 10 minutes.
+- Timeout: 600s
+
+## Dependencies
+
+xec uses [Cobra](https://github.com/spf13/cobra) for it's command generation.
 
 ## Initial configuration
 

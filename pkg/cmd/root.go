@@ -21,7 +21,6 @@ const (
 	AppName                                      = "xec"  // AppName is the name of the application
 	DefaultConfigFileNameWithoutExtension        = ".xec" // DefaultConfigFileNameWithoutExtension is the name of the config file
 	DefaultConfigExtension                string = "yaml" // DefaultConfigExtension is the extension used by default
-	DefaultConfigFileNameWithExtension    string = DefaultConfigFileNameWithoutExtension + "." + DefaultConfigExtension
 )
 
 var (
@@ -37,7 +36,8 @@ var (
 	IgnoreErrorFlag   bool   = false // Continue even if the task errors
 	Timeout           int    = 600   // Timeout for tasks' execution context.
 	tLogFile          string = ""
-	InitConfiguration string = `tasks:
+	InitConfiguration string = `# yaml-language-server: $schema=https://raw.githubusercontent.com/leventogut/xec/main/schema/xec-yaml-schema.json
+tasks:
   - alias: myCommand
     cmd: echo
     args:

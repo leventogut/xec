@@ -58,7 +58,9 @@
                     }
                 }
             },
-            "required": [],
+            "required": [
+                "tasks"
+            ],
             "title": "xec"
         },
         "Environment": {
@@ -127,9 +129,6 @@
                         "type": "string"
                     }
                 },
-                "debug": {
-                    "type": "boolean"
-                },
                 "logFile": {
                     "type": "string"
                 },
@@ -141,6 +140,9 @@
                 },
                 "restartOnFailure": {
                     "type": "boolean"
+                },
+                "restartLimit": {
+                    "type": "integer"
                 }
             },
             "required": [
@@ -187,7 +189,7 @@
                     "type": "boolean"
                 },
                 "restartLimit": {
-                    "type": ""
+                    "type": "integer"
                 }
             },
             "required": [
