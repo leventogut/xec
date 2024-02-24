@@ -22,6 +22,7 @@ const (
 	AppName                                      = "xec"  // AppName is the name of the application
 	DefaultConfigFileNameWithoutExtension        = ".xec" // DefaultConfigFileNameWithoutExtension is the name of the config file
 	DefaultConfigExtension                string = "yaml" // DefaultConfigExtension is the extension used by default
+	DefaultRestartLimit                   int    = 5      // If restart feature is enabled, this limits the number of restarts of a task.
 )
 
 var (
@@ -107,6 +108,16 @@ func Execute() {
 				t.LogFile = C.LogFile
 			}
 
+			if t.RestartLimit != 0 {
+
+			} else if C.TaskDefaults.RestartLimit != 0 {
+				t.RestartLimit = C.TaskDefaults.RestartLimit
+			} else if C.RestartLimit != 0 {
+				t.RestartLimit = C.RestartLimit
+			} else {
+				t.RestartLimit = DefaultRestartLimit
+			}
+
 			if t.LogFile == "auto" {
 				now := time.Now().Format(time.RFC3339Nano)
 				t.LogFile = "xec-log-" + t.Alias + "-" + now + ".log"
@@ -184,7 +195,7 @@ func Execute() {
 				Run: func(cmd *cobra.Command, args []string) {
 					taskListStartTime := time.Now()
 					o.Info("Task list %+v is starting.", tL.Alias)
-					o.Info("Task list %+v is logged to %+v.", tL.Alias, tL.LogFile)
+					o.Info("Task list %+v is logged to %+v", tL.Alias, tL.LogFile)
 					if tL.Parallel {
 						var wg sync.WaitGroup
 

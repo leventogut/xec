@@ -13,6 +13,7 @@ type Config struct {
 	Quiet        bool         `yaml:"quiet" json:"quiet"`
 	LogFile      string       `yaml:"logFile" json:"logFile"`
 	LogDir       string       `yaml:"logDir" json:"logDir"`
+	RestartLimit int          `yaml:"restartLimit" json:"restartLimit"`
 	Imports      []string     `yaml:"imports" json:"imports"`
 	TaskDefaults TaskDefaults `yaml:"taskDefaults" json:"taskDefaults"`
 	Tasks        []*Task      `yaml:"tasks" json:"tasks"`
@@ -22,10 +23,11 @@ type Config struct {
 
 // TaskDefaults defines the default values for all tasks mentioned.
 type TaskDefaults struct {
-	Timeout     int         `yaml:"timeout" json:"timeout"`
-	Environment Environment `yaml:"environment" json:"environment"`
-	LogFile     string      `yaml:"logFile" json:"logFile"`
-	IgnoreError bool        `yaml:"ignoreError" json:"ignoreError"`
+	Timeout      int         `yaml:"timeout" json:"timeout"`
+	RestartLimit int         `yaml:"restartLimit" json:"restartLimit"`
+	Environment  Environment `yaml:"environment" json:"environment"`
+	LogFile      string      `yaml:"logFile" json:"logFile"`
+	IgnoreError  bool        `yaml:"ignoreError" json:"ignoreError"`
 }
 
 // Task is a combination of alias, description, command, and arguments.
@@ -42,8 +44,10 @@ type Task struct {
 	IgnoreError      bool        `yaml:"ignoreError" json:"ignoreError"`
 	RestartOnSuccess bool        `yaml:"restartOnSuccess" json:"restartOnSuccess"`
 	RestartOnFailure bool        `yaml:"restartOnFailure" json:"restartOnFailure"`
-	Directory        string      `yaml:"directory" json:"directory"`
-	Status           TaskStatus  `yaml:"taskStatus" json:"taskStatus"`
+	RestartLimit     int         `yaml:"restartLimit" json:"restartLimit"`
+	NumberOfRestarts int
+	Directory        string     `yaml:"directory" json:"directory"`
+	Status           TaskStatus `yaml:"taskStatus" json:"taskStatus"`
 }
 
 // Environment defines the environment key/values that shoul be feed to the process.

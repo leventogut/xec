@@ -95,11 +95,19 @@ func Execute(taskPointerAddress **Task) {
 		o.Error("Task " + t.Alias + " didn't complete successfully.")
 	}
 	if t.RestartOnSuccess && t.Status.Success {
-		Execute(&t)
+		t.NumberOfRestarts++
+		if t.NumberOfRestarts < t.RestartLimit {
+			Execute(&t)
+		}
+
 	}
 
+	o.Warning("t.NumberOfRestarts: %v\nt.RestartLimit: %v", t.NumberOfRestarts, t.RestartLimit)
 	if t.RestartOnFailure && !t.Status.Success {
-		Execute(&t)
+		t.NumberOfRestarts++
+		if t.NumberOfRestarts < t.RestartLimit {
+			Execute(&t)
+		}
 	}
 	if !t.IgnoreError && t.Status.ExitCode != 0 {
 		os.Exit(t.Status.ExitCode)
