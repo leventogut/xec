@@ -4,7 +4,7 @@
 xec is a simple command executor.
 
 Command, it's arguments and configuration of how to run it, is referred as `task`.
-Xec reads a yaml based configuration file in either current directory and in home directory of the user. It is also possible to add another config file via `--config` argument.
+Xec reads a yaml based configuration file in either current directory and in home directory of the user. It is also possible to import other configurations file via the configuration file..
 Reading configuration from the current working directory has advantages of per-project configuration structure.
 
 It allows you to control environment of the command execution, such as timeout, environment values, restart behavior and so on.
@@ -75,6 +75,15 @@ sha256sum xec.tar.gz
 
 ```bash
 go install github.com/leventogut/xec 
+```
+
+### Container
+
+You can also copy the executable from the container image repository. 
+
+```Dockerfile 
+FROM alpine:latest
+COPY --from=docker.io/leventogut/xec:latest /xec /xec
 ```
 
 ## Usage
