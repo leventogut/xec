@@ -20,6 +20,11 @@ builds:
       - windows
       - darwin
       - freebsd
+      - openbsd
+    goarch:
+      - amd64
+      - arm64
+      - arm
 
 archives:
   - format: tar.gz
@@ -36,7 +41,7 @@ archives:
 dockers:
   - id: xec
     dockerfile: "Dockerfile"
-#    use: buildx
+    use: buildx
     skip_push: false
     image_templates:
       - "docker.io/leventogut/xec"
@@ -46,10 +51,7 @@ dockers:
       - "--label=org.opencontainers.image.title={{.ProjectName}}"
       - "--label=org.opencontainers.image.revision={{.FullCommit}}"
       - "--label=org.opencontainers.image.version={{.Version}}"
-#      - "--platform=linux/arm64"
       - "--platform=linux/amd64"
-#      - "--platform=darwin/amd64"
-#      - "--platform=darwin/arm64"
 
 changelog:
   sort: asc
