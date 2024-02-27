@@ -22,9 +22,14 @@ builds:
       - freebsd
       - openbsd
     goarch:
+      - "386"
       - amd64
       - arm64
       - arm
+
+    goarm:
+      - 6
+      - 7
 
 archives:
   - format: tar.gz
@@ -39,6 +44,19 @@ archives:
       - goos: windows
         format: zip
 dockers:
+  - id: xec-linux-386
+    dockerfile: "Dockerfile"
+    use: buildx
+    skip_push: false
+    image_templates:
+      - "docker.io/leventogut/{{ .ProjectName }}:{{ .Version }}-linux-386"
+    build_flag_templates:
+      - "--pull"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+      - "--platform=linux/386"
   - id: xec-linux-amd64
     dockerfile: "Dockerfile"
     use: buildx
@@ -65,16 +83,47 @@ dockers:
       - "--label=org.opencontainers.image.revision={{.FullCommit}}"
       - "--label=org.opencontainers.image.version={{.Version}}"
       - "--platform=linux/arm64"
-
+  - id: xec-linux-arm/v6
+    dockerfile: "Dockerfile"
+    use: buildx
+    skip_push: false
+    image_templates:
+      - "docker.io/leventogut/{{ .ProjectName }}:{{ .Version }}-linux-armv6"
+    build_flag_templates:
+      - "--pull"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+      - "--platform=linux/arm/v6"
+  - id: xec-linux-arm/v7
+    dockerfile: "Dockerfile"
+    use: buildx
+    skip_push: false
+    image_templates:
+      - "docker.io/leventogut/{{ .ProjectName }}:{{ .Version }}-linux-armv7"
+    build_flag_templates:
+      - "--pull"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+      - "--platform=linux/arm/v7"
 docker_manifests:
   - name_template: 'docker.io/leventogut/{{ .ProjectName }}:{{ .Version }}'
     image_templates:
+      - "docker.io/leventogut/{{ .ProjectName }}:{{ .Version }}-linux-386"
       - "docker.io/leventogut/{{ .ProjectName }}:{{ .Version }}-linux-amd64"
       - "docker.io/leventogut/{{ .ProjectName }}:{{ .Version }}-linux-arm64"
+      - "docker.io/leventogut/{{ .ProjectName }}:{{ .Version }}-linux-armv6"
+      - "docker.io/leventogut/{{ .ProjectName }}:{{ .Version }}-linux-armv7"
   - name_template: 'docker.io/leventogut/{{ .ProjectName }}:latest'
     image_templates:
+      - "docker.io/leventogut/{{ .ProjectName }}:{{ .Version }}-linux-386"
       - "docker.io/leventogut/{{ .ProjectName }}:{{ .Version }}-linux-amd64"
       - "docker.io/leventogut/{{ .ProjectName }}:{{ .Version }}-linux-arm64"
+      - "docker.io/leventogut/{{ .ProjectName }}:{{ .Version }}-linux-armv6"
+      - "docker.io/leventogut/{{ .ProjectName }}:{{ .Version }}-linux-armv7"
 
 changelog:
   sort: asc
