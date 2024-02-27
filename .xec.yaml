@@ -1,5 +1,5 @@
 # yaml-language-server: $schema=schema/xec-yaml-schema.json
-# # yaml-language-server: $schema=https://raw.githubusercontent.com/leventogut/xec/main/schema/xec-yaml-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/leventogut/xec/main/schema/xec-yaml-schema.json
 #imports:
 #  - examples/restart-on-failure.xec.yaml
 #  - examples/parallel.xec.yaml
@@ -7,6 +7,7 @@ verbose: true
 debug: true
 logDir: ./log
 logFile: "auto" # "xec.log"
+restartLimit: 100
 taskDefaults:
   environment:
     passOn: true
@@ -28,7 +29,8 @@ tasks:
     cmd: sleep
     args:
       - "1"
-#    logFile: "xec-task.log"
+    restartOnSuccess: true
+  #    logFile: "xec-task.log"
   - alias: wait_3
     cmd: sleep
     args:
@@ -37,6 +39,11 @@ tasks:
     cmd: sleep
     args:
       - "1"
+  - alias: lsz
+    cmd: ls
+    args:
+      - "-alz"
+    restartOnFailure: true
 taskLists:
   - alias: wait
     parallel: false

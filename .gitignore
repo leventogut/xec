@@ -10,8 +10,8 @@
 
 # Test binary, built with `go test -c`
 *.test
-./xec
-xec
+/xec
+
 main
 
 bin

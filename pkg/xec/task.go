@@ -23,6 +23,7 @@ func ExecuteWithWaitGroups(wg *sync.WaitGroup, taskPointerAddress **Task) {
 // Execute starts the defined command with its arguments.
 func Execute(taskPointerAddress **Task) {
 	t := *taskPointerAddress
+
 	var cancel context.CancelFunc
 	if t.Timeout == 0 {
 		t.Timeout = DefaultTimeout
@@ -30,10 +31,7 @@ func Execute(taskPointerAddress **Task) {
 	t.Status.ExecContext, cancel = context.WithTimeout(context.Background(), time.Duration(t.Timeout)*time.Second)
 	defer cancel()
 
-	// Merge args from config and user entered
-	args := append(t.Args, t.ExtraArgs...)
-
-	t.Status.ExecCmd = exec.CommandContext(t.Status.ExecContext, t.Cmd, args...)
+	t.Status.ExecCmd = exec.CommandContext(t.Status.ExecContext, t.Cmd, append(t.Args, t.ExtraArgs...)...)
 
 	// Change working directory if it is given.
 	if t.Directory != "" {
@@ -44,6 +42,8 @@ func Execute(taskPointerAddress **Task) {
 	t.Status.ExecCmd.Env = t.SetEnvironment()
 
 	t.Status.ExecCmd.Stdin = os.Stdin
+
+	// Setup log
 	var logFile *os.File
 
 	if t.LogFile != "" {
@@ -74,12 +74,16 @@ func Execute(taskPointerAddress **Task) {
 	t.Status.Started = true
 	taskStartTime := time.Now()
 
-	// Execute command
-	if err := t.Status.ExecCmd.Run(); err != nil {
-		o.Error("Task couldn't be executed, Error: %+v\n", err)
-		t.Status.Success = false
-	} else {
-		t.Status.Success = true
+	// Start execution
+	if err := t.Status.ExecCmd.Start(); err != nil {
+		o.Error("Task couldn't be started, Error: %+v\n", err)
+		os.Exit(1)
+	}
+
+	//Wait for the execution
+	if err := t.Status.ExecCmd.Wait(); err != nil {
+		o.Error("Error occurred while waiting, Error: %+v\n", err)
+		os.Exit(1)
 	}
 
 	t.Status.Finished = true
@@ -87,13 +91,17 @@ func Execute(taskPointerAddress **Task) {
 	taskDuration := taskFinishTime.Sub(taskStartTime)
 
 	o.Info("Task " + t.Alias + " finished in " + taskDuration.String() + ".")
-	t.Status.ExitCode = t.Status.ExecCmd.ProcessState.ExitCode()
 
-	if t.Status.Success {
-		o.Success("Task " + t.Alias + " completed successfully in " + taskDuration.String() + ".")
-	} else {
+	if t.Status.ExecCmd.ProcessState.ExitCode() > 0 {
+		t.Status.Success = false
 		o.Error("Task " + t.Alias + " didn't complete successfully.")
+
+	} else if t.Status.ExecCmd.ProcessState.ExitCode() == 0 {
+		t.Status.Success = true
+		o.Success("Task " + t.Alias + " completed successfully in " + taskDuration.String() + ".")
 	}
+
+	// Restarts
 	if t.RestartOnSuccess && t.Status.Success {
 		t.NumberOfRestarts++
 		if t.NumberOfRestarts < t.RestartLimit {
@@ -101,16 +109,15 @@ func Execute(taskPointerAddress **Task) {
 		}
 
 	}
-
-	o.Warning("t.NumberOfRestarts: %v\nt.RestartLimit: %v", t.NumberOfRestarts, t.RestartLimit)
 	if t.RestartOnFailure && !t.Status.Success {
 		t.NumberOfRestarts++
 		if t.NumberOfRestarts < t.RestartLimit {
 			Execute(&t)
 		}
 	}
-	if !t.IgnoreError && t.Status.ExitCode != 0 {
-		os.Exit(t.Status.ExitCode)
+
+	if !t.IgnoreError && t.Status.ExecCmd.ProcessState.ExitCode() != 0 {
+		os.Exit(1)
 	}
 }
 

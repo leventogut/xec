@@ -1,9 +1,9 @@
 {
-    "name": "Xec",
-    "description": "Xec Tasks Configuration",
-    "url": "https://raw.githubusercontent.com/leventogut/xec/main/schema/xec-tasks-yaml-schema.json",
+    "name": "xec configuration",
+    "description": "xec configuration file",
     "fileMatch": [
         ".xec.yaml",
         "*.xec.yaml"
-    ]
+    ],
+    "url": "https://raw.githubusercontent.com/leventogut/xec/main/schema/xec-tasks-yaml-schema.json"
 }

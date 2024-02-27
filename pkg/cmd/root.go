@@ -13,9 +13,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/charmbracelet/huh/spinner"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/charmbracelet/huh/spinner"
 )
 
 const (
@@ -73,9 +74,9 @@ func Execute() {
 		for _, tInstance := range C.Tasks {
 			t := tInstance
 
-			if t.Timeout == 0 {
+			if t.Timeout < 1 {
 				t.Timeout = C.TaskDefaults.Timeout
-				if t.Timeout == 0 {
+				if t.Timeout < 1 {
 					t.Timeout = xec.DefaultTimeout
 				}
 			}
@@ -144,6 +145,7 @@ func Execute() {
 					}
 					_ = spinner.New().
 						Title("Task " + t.Alias + " is running.").
+						Type(spinner.Dots).
 						Action(executeTask).
 						Run()
 				},
@@ -214,6 +216,7 @@ func Execute() {
 							}
 							_ = spinner.New().
 								Title("Task " + taskListTask.Alias + " is running.").
+								Type(spinner.Dots).
 								Action(executeTask).
 								Run()
 						}

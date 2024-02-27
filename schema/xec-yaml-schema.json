@@ -18,8 +18,14 @@
                 "noColor": {
                     "type": "boolean"
                 },
+                "logFile": {
+                    "type": "string"
+                },
                 "logDir": {
                     "type": "string"
+                },
+                "restartLimit": {
+                    "type": "integer"
                 },
                 "imports": {
                     "type": "array"
