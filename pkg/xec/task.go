@@ -6,7 +6,9 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"os/signal"
 	"sync"
+	"syscall"
 	"time"
 )
 
@@ -79,6 +81,22 @@ func Execute(taskPointerAddress **Task) {
 		o.Error("Task couldn't be started, Error: %+v\n", err)
 		os.Exit(1)
 	}
+
+	// Handle signals
+	signalChannel := make(chan os.Signal, 1)
+	signal.Notify(signalChannel,
+		syscall.SIGHUP,
+		syscall.SIGINT,
+		syscall.SIGTERM,
+		syscall.SIGQUIT)
+	go func() {
+		for {
+			receivedSignal := <-signalChannel
+			o.Warning("Signal received: %+v.", receivedSignal)
+			o.Info("Passing signal %+v to %+v.", receivedSignal, t.Alias)
+			_ = t.Status.ExecCmd.Process.Signal(receivedSignal)
+		}
+	}()
 
 	//Wait for the execution
 	if err := t.Status.ExecCmd.Wait(); err != nil {

@@ -35,10 +35,10 @@ tasks:
     cmd: sleep
     args:
       - "3"
-  - alias: wait_12
+  - alias: wait_60
     cmd: sleep
     args:
-      - "1"
+      - "60"
   - alias: lsz
     cmd: ls
     args:
