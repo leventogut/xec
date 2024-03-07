@@ -1,6 +1,6 @@
 # Title of the example
 
-## Code
+## Configuration
 
 ```yaml
 ```

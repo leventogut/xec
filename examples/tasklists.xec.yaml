@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/leventogut/xec/main/schema/xec-yaml-schema.json
+verbose: true
+tasks:
+  - alias: sleep_2
+    cmd: sleep
+    args:
+      - "2"
+  - alias: sleep_3
+    cmd: sleep
+    args:
+      - "3"
+taskLists:
+  - alias: tl
+    taskAliases:
+      - sleep_2
+      - sleep_3

@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/leventogut/xec/main/schema/xec-yaml-schema.json
+verbose: true
+tasks:
+  - alias: myls
+    cmd: ls
+    args:
+      - "-al"
+      - "-h"
+    directory: /var/log
+  - alias: mypwd
+    cmd: pwd
+    directory: /var/log

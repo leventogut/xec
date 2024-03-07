@@ -98,7 +98,6 @@ func Execute() {
 			if t.Environment.RejectFilterRegex == nil {
 				t.Environment.RejectFilterRegex = C.TaskDefaults.Environment.RejectFilterRegex
 			}
-
 			t.Environment.Values = append(t.Environment.Values, C.TaskDefaults.Environment.Values...)
 
 			if t.LogFile != "" {
@@ -176,12 +175,17 @@ func Execute() {
 							tL.LogFile = "xec-log-" + tL.Alias + "-" + now + ".log"
 						}
 
-						t.LogFile = LogDir + tL.LogFile
+						if tL.LogFile != "" {
+							t.LogFile = LogDir + tL.LogFile
+						}
+
 						taskListTasks = append(taskListTasks, t)
 					}
 				}
 			}
-			tL.LogFile = LogDir + tL.LogFile
+			if tL.LogFile != "" {
+				tL.LogFile = LogDir + tL.LogFile
+			}
 
 			// For each TaskList add a command
 			rootCmd.AddCommand(&cobra.Command{

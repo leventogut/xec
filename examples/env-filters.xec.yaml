@@ -1,0 +1,14 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/leventogut/xec/main/schema/xec-yaml-schema.json
+verbose: true
+tasks:
+  - alias: penv
+    cmd: printenv
+    environment:
+      values:
+        - XEC_task: penv
+        - XEC_environment: dev
+      passOn: true
+      acceptFilterRegex:
+        - "XEC.*"
+      rejectFilterRegex:
+        - ".*SECRET.*"

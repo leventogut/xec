@@ -72,7 +72,12 @@ func Execute(taskPointerAddress **Task) {
 	}
 
 	o.Info("Task %+v is starting.", t.Alias)
-	o.Info("Task %+v is logged to %+v", t.Alias, t.LogFile)
+	if t.LogFile != "" {
+		o.Info("Task %+v is logged to %+v", t.Alias, t.LogFile)
+	} else {
+		o.Info("Task %+v is not logged.", t.Alias)
+	}
+
 	t.Status.Started = true
 	taskStartTime := time.Now()
 
@@ -149,7 +154,6 @@ func (t *Task) SetEnvironment() []string {
 		// Traverse the environment values we have and apply the accept filters.
 		for _, envKeyValue := range os.Environ() {
 			if t.Environment.AcceptFilterRegex != nil {
-				// l.Debug("AcceptFilterRegex is set")
 				for _, regex := range t.Environment.AcceptFilterRegex {
 					if CheckRegex(envKeyValue, regex) {
 						environmentValuesAfterAcceptFilter = append(environmentValuesAfterAcceptFilter, envKeyValue)
@@ -159,14 +163,16 @@ func (t *Task) SetEnvironment() []string {
 		}
 
 		// Traverse the accepted environment values above and apply the reject filters.
-		for _, envKeyValue := range environmentValuesAfterAcceptFilter {
-			if t.Environment.RejectFilterRegex != nil {
+		if t.Environment.RejectFilterRegex != nil {
+			for _, envKeyValue := range environmentValuesAfterAcceptFilter {
 				for _, regex := range t.Environment.RejectFilterRegex {
 					if !CheckRegex(envKeyValue, regex) {
 						environmentValuesToBeFedToProcess = append(environmentValuesToBeFedToProcess, envKeyValue)
 					}
 				}
 			}
+		} else {
+			environmentValuesToBeFedToProcess = append(environmentValuesToBeFedToProcess, environmentValuesAfterAcceptFilter...)
 		}
 	}
 
