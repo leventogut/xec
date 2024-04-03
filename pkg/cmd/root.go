@@ -4,14 +4,15 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/leventogut/xec/pkg/output"
-	"github.com/leventogut/xec/pkg/xec"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/leventogut/xec/pkg/output"
+	"github.com/leventogut/xec/pkg/xec"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -128,8 +129,38 @@ func Execute() {
 				t.LogFile = LogDir + t.LogFile
 			}
 
+			// Check if namespace is configured, set it up if it is.
+			var commandToAdd *cobra.Command
+			if C.Namespace != "" {
+				var doesNewNamespaceExists = false
+				for _, command := range rootCmd.Commands() {
+					if command.Use == C.Namespace {
+						doesNewNamespaceExists = true
+					}
+				}
+				if !doesNewNamespaceExists {
+					rootCmd.AddCommand(&cobra.Command{
+						Use:   C.Namespace,
+						Short: C.Namespace + " namespace",
+						Run: func(cmd *cobra.Command, args []string) {
+							if len(args) == 0 {
+								_ = cmd.Help()
+								os.Exit(1)
+							}
+						},
+					})
+				}
+				// AddCommand doesn't return the actual command, let's get from the list.
+				for _, command := range rootCmd.Commands() {
+					if command.Use == C.Namespace {
+						commandToAdd = command
+					}
+				}
+			} else {
+				commandToAdd = rootCmd
+			}
 			// Add task aliases (sub-commands)
-			rootCmd.AddCommand(&cobra.Command{
+			commandToAdd.AddCommand(&cobra.Command{
 				Use:   t.Alias,
 				Short: t.Cmd + " " + strings.Join(t.Args[:], " "),
 				Long:  t.Description,
@@ -176,15 +207,47 @@ func Execute() {
 							tL.LogFile = "xec-log-" + tL.Alias + "-" + now + ".log"
 						}
 
-						t.LogFile = LogDir + tL.LogFile
+						if tL.LogFile != "" {
+							t.LogFile = LogDir + tL.LogFile
+						}
+
 						taskListTasks = append(taskListTasks, t)
 					}
 				}
 			}
-			tL.LogFile = LogDir + tL.LogFile
 
+			// Check if namespace is configured, set it up if it is.
+			var commandToAdd *cobra.Command
+			if C.Namespace != "" {
+				var doesNewNamespaceExists = false
+				for _, command := range rootCmd.Commands() {
+					if command.Use == C.Namespace {
+						doesNewNamespaceExists = true
+					}
+				}
+				if !doesNewNamespaceExists {
+					rootCmd.AddCommand(&cobra.Command{
+						Use:   C.Namespace,
+						Short: C.Namespace + " namespace",
+						Run: func(cmd *cobra.Command, args []string) {
+							if len(args) == 0 {
+								_ = cmd.Help()
+								os.Exit(1)
+							}
+						},
+					})
+				}
+				// AddCommand doesn't return the actual command, let's get from the list.
+				for _, command := range rootCmd.Commands() {
+					if command.Use == C.Namespace {
+						commandToAdd = command
+					}
+				}
+			} else {
+				commandToAdd = rootCmd
+			}
 			// For each TaskList add a command
-			rootCmd.AddCommand(&cobra.Command{
+			commandToAdd.AddCommand(&cobra.Command{
 				Use:   tL.Alias,
 				Short: tL.Description,
 				Args:  cobra.ArbitraryArgs,
@@ -197,7 +260,11 @@ func Execute() {
 				Run: func(cmd *cobra.Command, args []string) {
 					taskListStartTime := time.Now()
 					o.Info("Task list %+v is starting.", tL.Alias)
-					o.Info("Task list %+v is logged to %+v", tL.Alias, tL.LogFile)
+
+					if tL.LogFile != "" {
+						o.Info("Task list %+v is logged to %+v", tL.Alias, tL.LogFile)
+					}
+
 					if tL.Parallel {
 						var wg sync.WaitGroup
 

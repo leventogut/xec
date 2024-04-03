@@ -19,6 +19,7 @@ type Config struct {
 	Tasks        []*Task      `yaml:"tasks" json:"tasks"`
 	TaskLists    []*TaskList  `yaml:"taskLists" json:"taskLists"`
 	Path         string
+	Namespace    string `yaml:"namespace" json:"namespace"`
 }
 
 // TaskDefaults defines the default values for all tasks mentioned.
