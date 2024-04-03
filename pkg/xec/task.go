@@ -2,7 +2,6 @@ package xec
 
 import (
 	"context"
-	"github.com/leventogut/xec/pkg/output"
 	"io"
 	"os"
 	"os/exec"
@@ -10,6 +9,8 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/leventogut/xec/pkg/output"
 )
 
 var (
@@ -72,7 +73,11 @@ func Execute(taskPointerAddress **Task) {
 	}
 
 	o.Info("Task %+v is starting.", t.Alias)
-	o.Info("Task %+v is logged to %+v", t.Alias, t.LogFile)
+
+	if t.LogFile != "" {
+		o.Info("Task %+v is logged to %+v", t.Alias, t.LogFile)
+	}
+
 	t.Status.Started = true
 	taskStartTime := time.Now()
 

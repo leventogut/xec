@@ -30,6 +30,9 @@
                 "imports": {
                     "type": "array"
                 },
+                "namespace": {
+                    "type": "string"
+                },
                 "taskDefaults": {
                     "type": "object",
                     "additionalProperties": false,
