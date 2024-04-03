@@ -28,7 +28,7 @@ const (
 )
 
 var (
-	o                 = output.GetInstance()
+	// o                 = output.GetInstance()
 	Configs           []*xec.Config
 	ConfigFileFlag    string = ""    // Custom configuration file.
 	Verbose           bool   = true  // Verbose defines the verbosity as a boolean.
@@ -39,7 +39,6 @@ var (
 	LogFile           string = ""    // Log file name
 	IgnoreErrorFlag   bool   = false // Continue even if the task errors
 	Timeout           int    = 600   // Timeout for tasks' execution context.
-	tLogFile          string = ""
 	InitConfiguration string = `# yaml-language-server: $schema=https://raw.githubusercontent.com/leventogut/xec/main/schema/xec-yaml-schema.json
 tasks:
   - alias: myCommand
@@ -66,14 +65,38 @@ var rootCmd = &cobra.Command{
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	var err error
-	o.SetVerboseFlag(Verbose)
-	o.SetDebugFlag(Debug)
-	o.SetQuietFlag(Quiet)
-	o.SetNoColorFlag(NoColor)
 
 	for _, C := range Configs {
+		o := output.GetInstance()
+
+		if C.Verbose {
+			o.SetVerboseFlag(C.Verbose)
+		} else {
+			o.SetVerboseFlag(Verbose)
+		}
+
+		if C.Debug {
+			o.SetDebugFlag(C.Debug)
+		} else {
+			o.SetDebugFlag(Debug)
+		}
+
+		if !C.Quiet {
+			o.SetQuietFlag(C.Quiet)
+		} else {
+			o.SetQuietFlag(Quiet)
+		}
+
+		if !C.NoColor {
+			o.SetNoColorFlag(C.NoColor)
+		} else {
+			o.SetNoColorFlag(NoColor)
+		}
+
 		for _, tInstance := range C.Tasks {
 			t := tInstance
+
+			t.Output = o
 
 			if t.Timeout < 1 {
 				t.Timeout = C.TaskDefaults.Timeout
@@ -290,7 +313,7 @@ func Execute() {
 					}
 					taskListFinishTime := time.Now()
 					taskDuration := taskListFinishTime.Sub(taskListStartTime)
-					o.Success("Task list " + tL.Alias + " finished in " + taskDuration.String() + ".")
+					o.Info("Task list " + tL.Alias + " finished in " + taskDuration.String() + ".")
 				},
 			})
 		}
@@ -358,11 +381,11 @@ func initConfig() {
 	// current working directory
 	CreateViperInstanceFromConfig(".", DefaultConfigFileNameWithoutExtension, DefaultConfigExtension)
 
-	if len(Configs) < 1 {
-		o.Warning("No configuration file found.")
+	// if len(Configs) < 1 {
+	// 	o.Warning("No configuration file found.")
 
-		o.Warning("You can generate a skeleton configuration via: %s init", AppName)
-	}
+	// 	o.Warning("You can generate a skeleton configuration via: %s init", AppName)
+	// }
 }
 
 func CreateViperInstanceFromConfig(path string, configName string, extension string) {
@@ -376,15 +399,15 @@ func CreateViperInstanceFromConfig(path string, configName string, extension str
 	viperInstance.SetConfigType(extension)  // REQUIRED if the config file does not have the extension in the name
 	viperInstance.AddConfigPath(path)       // look for config in the working directory
 
-	o.Debug("Trying to read config file, [%v/%v.%v].", path, configName, extension)
+	// o.Debug("Trying to read config file, [%v/%v.%v].", path, configName, extension)
 
 	err = viperInstance.ReadInConfig() // Find and read the config file
 	if err != nil {                    // Handle errors reading the config file
-		o.Warning("Can't read config file, [%v/%v.%v], skipping", path, configName, extension)
+		// o.Warning("Can't read config file, [%v/%v.%v], skipping", path, configName, extension)
 		return
 	}
 
-	o.Success("Loaded config file, [%v/%v.%v]", path, configName, extension)
+	// o.Success("Loaded config file, [%v/%v.%v]", path, configName, extension)
 
 	var config *xec.Config
 
@@ -392,18 +415,7 @@ func CreateViperInstanceFromConfig(path string, configName string, extension str
 	Configs = append(Configs, config)
 
 	// Root variables form config
-	if config.Verbose {
-		Verbose = true
-	}
-	if config.Debug {
-		Debug = true
-	}
-	if config.NoColor {
-		NoColor = true
-	}
-	if config.Quiet {
-		Quiet = true
-	}
+
 	if config.LogDir != "" {
 		LogDir = strings.TrimSuffix(config.LogDir, "/") + "/"
 	}
@@ -422,15 +434,15 @@ func CreateViperInstanceFromConfig(path string, configName string, extension str
 // If the file doesn't exist, creates it.
 func initConfigFile(fileName string) {
 	if _, err := os.Stat(fileName); errors.Is(err, os.ErrNotExist) {
-		o.Info("Configuration file [%+v] not found.\n", fileName)
+		// o.Info("Configuration file [%+v] not found.\n", fileName)
 		configFile, err := os.OpenFile(fileName, os.O_RDWR|os.O_CREATE, 0644)
 		if err != nil {
-			o.Fatal("Can't open configuration file: %v, error:  %v\n", fileName, err)
+			// o.Fatal("Can't open configuration file: %v, error:  %v\n", fileName, err)
 		}
 		_, err = configFile.WriteString(InitConfiguration)
 		if err != nil {
-			o.Fatal("Can't write to file, error:  %v\n", err)
+			// o.Fatal("Can't write to file, error:  %v\n", err)
 		}
-		o.Success("Init configuration is written to file %v.", fileName)
+		// o.Success("Init configuration is written to file %v.", fileName)
 	}
 }
