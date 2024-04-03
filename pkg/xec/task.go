@@ -6,16 +6,15 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
-
-	"github.com/leventogut/xec/pkg/output"
 )
 
 var (
 	DefaultTimeout = 600
-	o              = output.GetInstance()
+	// o              = output.GetInstance()
 )
 
 func ExecuteWithWaitGroups(wg *sync.WaitGroup, taskPointerAddress **Task) {
@@ -54,7 +53,7 @@ func Execute(taskPointerAddress **Task) {
 
 		logFile, err = os.OpenFile(t.LogFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
-			o.Error("Can't open log file %+v - Error: %+v\n", t.LogFile, err)
+			t.Output.Error("Can't open log file %+v - Error: %+v\n", t.LogFile, err)
 		}
 		defer logFile.Close()
 
@@ -62,7 +61,7 @@ func Execute(taskPointerAddress **Task) {
 		logFile, _ = os.OpenFile(os.DevNull, os.O_WRONLY, 0)
 	}
 
-	if o.QuietFlag() {
+	if t.Output.QuietFlag() {
 		t.Status.ExecCmd.Stdout = io.MultiWriter(logFile)
 		t.Status.ExecCmd.Stderr = io.MultiWriter(logFile)
 
@@ -72,10 +71,11 @@ func Execute(taskPointerAddress **Task) {
 
 	}
 
-	o.Info("Task %+v is starting.", t.Alias)
+	t.Output.Info("Task %+v is starting.", t.Alias)
+	t.Output.Normal("> %+v %+v", t.Cmd, strings.Join(t.Args[:], " "))
 
 	if t.LogFile != "" {
-		o.Info("Task %+v is logged to %+v", t.Alias, t.LogFile)
+		t.Output.Info("Task %+v is logged to %+v", t.Alias, t.LogFile)
 	}
 
 	t.Status.Started = true
@@ -83,7 +83,7 @@ func Execute(taskPointerAddress **Task) {
 
 	// Start execution
 	if err := t.Status.ExecCmd.Start(); err != nil {
-		o.Error("Task couldn't be started, Error: %+v\n", err)
+		t.Output.Error("Task couldn't be started, Error: %+v\n", err)
 		os.Exit(1)
 	}
 
@@ -97,15 +97,15 @@ func Execute(taskPointerAddress **Task) {
 	go func() {
 		for {
 			receivedSignal := <-signalChannel
-			o.Warning("Signal received: %+v.", receivedSignal)
-			o.Info("Passing signal %+v to %+v.", receivedSignal, t.Alias)
+			t.Output.Warning("Signal received: %+v.", receivedSignal)
+			t.Output.Info("Passing signal %+v to %+v.", receivedSignal, t.Alias)
 			_ = t.Status.ExecCmd.Process.Signal(receivedSignal)
 		}
 	}()
 
 	//Wait for the execution
 	if err := t.Status.ExecCmd.Wait(); err != nil {
-		o.Error("Error occurred while waiting, Error: %+v\n", err)
+		t.Output.Error("Error occurred while waiting, Error: %+v\n", err)
 		os.Exit(1)
 	}
 
@@ -113,15 +113,15 @@ func Execute(taskPointerAddress **Task) {
 	taskFinishTime := time.Now()
 	taskDuration := taskFinishTime.Sub(taskStartTime)
 
-	o.Info("Task " + t.Alias + " finished in " + taskDuration.String() + ".")
+	t.Output.Info("Task " + t.Alias + " finished in " + taskDuration.String() + ".")
 
 	if t.Status.ExecCmd.ProcessState.ExitCode() > 0 {
 		t.Status.Success = false
-		o.Error("Task " + t.Alias + " didn't complete successfully.")
+		t.Output.Error("Task " + t.Alias + " didn't complete successfully.")
 
 	} else if t.Status.ExecCmd.ProcessState.ExitCode() == 0 {
 		t.Status.Success = true
-		o.Success("Task " + t.Alias + " completed successfully in " + taskDuration.String() + ".")
+		t.Output.Info("Task " + t.Alias + " completed successfully in " + taskDuration.String() + ".")
 	}
 
 	// Restarts

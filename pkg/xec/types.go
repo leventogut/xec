@@ -3,6 +3,8 @@ package xec
 import (
 	"context"
 	"os/exec"
+
+	"github.com/leventogut/xec/pkg/output"
 )
 
 // Config represents the configuration read from file or env values.
@@ -49,6 +51,7 @@ type Task struct {
 	NumberOfRestarts int
 	Directory        string     `yaml:"directory" json:"directory"`
 	Status           TaskStatus `yaml:"taskStatus" json:"taskStatus"`
+	Output           *output.Output
 }
 
 // Environment defines the environment key/values that shoul be feed to the process.

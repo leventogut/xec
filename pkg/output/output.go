@@ -6,26 +6,25 @@ import (
 	"log"
 	"os"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/fatih/color"
 )
 
-type Output interface {
-	NoColorFlag() bool
-	SetNoColorFlag(b bool)
-	LogFile() string
-	SetLogFile(f string)
-	QuietFlag() bool
-	SetQuietFlag(b bool)
-	DebugFlag() bool
-	SetDebugFlag(b bool)
-	VerboseFlag() bool
-	SetVerboseFlag(b bool)
-	Output()
-}
-type output struct {
+//	type Output interface {
+//		NoColorFlag() bool
+//		SetNoColorFlag(b bool)
+//		LogFile() string
+//		SetLogFile(f string)
+//		QuietFlag() bool
+//		SetQuietFlag(b bool)
+//		DebugFlag() bool
+//		SetDebugFlag(b bool)
+//		VerboseFlag() bool
+//		SetVerboseFlag(b bool)
+//		Output()
+//	}
+type Output struct {
 	noColor bool
 	logFile string
 	writers []io.Writer
@@ -36,14 +35,12 @@ type output struct {
 }
 
 var (
-	L       *output
-	prefix  string
-	once    sync.Once
+	L       *Output
 	logFile *os.File
 )
 
-func NewOutput(noColor bool, logFile string, quiet bool, debug bool, dev bool, verbose bool) *output {
-	return &output{
+func NewOutput(noColor bool, logFile string, quiet bool, debug bool, dev bool, verbose bool) *Output {
+	return &Output{
 		noColor: noColor,
 		logFile: logFile,
 		quiet:   quiet,
@@ -52,17 +49,15 @@ func NewOutput(noColor bool, logFile string, quiet bool, debug bool, dev bool, v
 	}
 }
 
-func GetInstance() *output {
-	once.Do(func() {
-		L = NewOutput(false, "", false, false, false, false)
-		if !L.quiet {
-			L.writers = append(L.writers, os.Stdout)
-		}
-		// L.setLogFile()
-	})
+// GetInstance returns a new instance of Output, each task has it's own instance.
+func GetInstance() *Output {
+	L = NewOutput(false, "", false, false, false, false)
+	if !L.quiet {
+		L.writers = append(L.writers, os.Stdout)
+	}
 	return L
 }
-func (o *output) setLogFile() {
+func (o *Output) setLogFile() {
 	if o.logFile != "" {
 		logFile, err := os.OpenFile(L.logFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 		if err != nil {
@@ -71,68 +66,72 @@ func (o *output) setLogFile() {
 		o.writers = append(o.writers, logFile)
 	}
 }
-func (o *output) NoColorFlag() bool {
+func (o *Output) NoColorFlag() bool {
 	return o.noColor
 }
-func (o *output) SetNoColorFlag(b bool) {
+func (o *Output) SetNoColorFlag(b bool) {
 	o.noColor = b
 }
-func (o *output) LogFileFlag() string {
+func (o *Output) LogFileFlag() string {
 	return o.logFile
 }
-func (o *output) SetLogFileFlag(f string) {
+func (o *Output) SetLogFileFlag(f string) {
 	o.logFile = f
 	o.setLogFile()
 }
-func (o *output) QuietFlag() bool {
+func (o *Output) QuietFlag() bool {
 	return o.quiet
 }
-func (o *output) SetQuietFlag(b bool) {
+func (o *Output) SetQuietFlag(b bool) {
 	o.quiet = b
 }
-func (o *output) DebugFlag() bool {
+func (o *Output) DebugFlag() bool {
 	return o.debug
 }
-func (o *output) SetDebugFlag(b bool) {
+func (o *Output) SetDebugFlag(b bool) {
 	o.debug = b
 }
-func (o *output) VerboseFlag() bool {
+func (o *Output) VerboseFlag() bool {
 	return o.verbose
 }
-func (o *output) SetVerboseFlag(b bool) {
+func (o *Output) SetVerboseFlag(b bool) {
 	o.verbose = b
 }
-func (o *output) Debug(m string, values ...interface{}) {
-	o.Output(m, "debug", values...)
+func (o *Output) Debug(m string, values ...interface{}) {
+	o.WriteOutput(m, "debug", values...)
 }
 
-func (o *output) Fatal(m string, values ...interface{}) {
-	o.Output(m, "fatal", values...)
+func (o *Output) Fatal(m string, values ...interface{}) {
+	o.WriteOutput(m, "fatal", values...)
 	os.Exit(1)
 }
 
-func (o *output) Error(m string, values ...interface{}) {
-	o.Output(m, "error", values...)
+func (o *Output) Error(m string, values ...interface{}) {
+	o.WriteOutput(m, "error", values...)
 }
 
-func (o *output) Warning(m string, values ...interface{}) {
-	o.Output(m, "warning", values...)
+func (o *Output) Warning(m string, values ...interface{}) {
+	o.WriteOutput(m, "warning", values...)
 }
 
-func (o *output) Info(m string, values ...interface{}) {
-	o.Output(m, "info", values...)
+func (o *Output) Normal(m string, values ...interface{}) {
+	o.WriteOutput(m, "normal", values...)
+}
+func (o *Output) Info(m string, values ...interface{}) {
+	o.WriteOutput(m, "info", values...)
 }
 
-func (o *output) Success(m string, values ...interface{}) {
-	o.Output(m, "success", values...)
+func (o *Output) Success(m string, values ...interface{}) {
+	o.WriteOutput(m, "success", values...)
 }
 
 // Output receives two strings (severity and message and outputs to stdout or
-func (o *output) Output(message string, outputType string, values ...interface{}) {
+func (o *Output) WriteOutput(message string, outputType string, values ...interface{}) {
 	debugColor := color.FgYellow
 	fatalColor := color.FgRed
 	errorColor := color.FgRed
 	warningColor := color.FgYellow
+	normalColor := color.FgWhite
 	infoColor := color.FgHiBlue
 	successColor := color.FgGreen
 
@@ -149,6 +148,8 @@ func (o *output) Output(message string, outputType string, values ...interface{}
 		o.color = color.New(errorColor)
 	} else if outputType == "info" {
 		o.color = color.New(infoColor)
+	} else if outputType == "normal" {
+		o.color = color.New(normalColor)
 	} else if outputType == "success" {
 		o.color = color.New(successColor)
 	} else {
@@ -170,6 +171,8 @@ func (o *output) Output(message string, outputType string, values ...interface{}
 			w = true
 		} else if outputType == "success" {
 			w = true
+		} else if outputType == "normal" {
+			w = true
 		} else {
 			w = false
 		}
@@ -177,8 +180,13 @@ func (o *output) Output(message string, outputType string, values ...interface{}
 
 	if w {
 		now := time.Now().Format(time.RFC3339)
+		var messageResult string
+		if outputType == "normal" {
+			messageResult = message
+		} else {
+			messageResult = now + " | " + strings.ToUpper(outputType) + " | " + message
+		}
 
-		messageResult := now + " | " + strings.ToUpper(outputType) + " | " + message
 		_, err := o.write(fmt.Sprintf(messageResult, values...))
 		if err != nil {
 			fmt.Printf("Couldn't write log line, error: %+v\n", err)
@@ -189,7 +197,7 @@ func (o *output) Output(message string, outputType string, values ...interface{}
 	}
 }
 
-func (o *output) write(s string) (n int, err error) {
+func (o *Output) write(s string) (n int, err error) {
 	if o.logFile != "" {
 		defer logFile.Close()
 	}
