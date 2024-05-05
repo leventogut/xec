@@ -1,0 +1,19 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/leventogut/xec/main/schema/xec-yaml-schema.json
+# verbose: true
+namespace: k
+tasks:
+  - alias: gp
+    cmd: kubectl
+    args:
+      - get
+      - pods
+  - alias: gs
+    cmd: kubectl
+    args:
+      - get
+      - svc
+taskLists:
+  - alias: ps
+    taskAliases:
+      - gp
+      - gs
