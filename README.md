@@ -9,7 +9,7 @@ Reading configuration from the current working directory has advantages of per-p
 
 It allows you to control environment of the command execution, such as timeout, environment values, restart behavior and so on.
 
-Environment values can be filtered, either to pass or block values based on regex match, also adding environment values is trivial. 
+Environment values can be filtered, either to pass or block values based on regex match, also adding environment values is trivial.
 Xec also supports reading .env file in the current directory, and reads it by default.
 
 xec has the capability of:
@@ -22,14 +22,53 @@ xec has the capability of:
 - Filtering and adding environment values that are passed to the command
 - Importing multiple configurations
 
+Example run
+
+```bash
+❯ xec k ps
+> kubectl get pods
+No resources found in default namespace.
+> kubectl get svc
+NAME         TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
+kubernetes   ClusterIP   10.96.0.1    <none>        443/TCP   145m
+
+❯ cat examples/kubernetes.xec.yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/leventogut/xec/main/schema/xec-yaml-schema.json
+# verbose: true
+namespace: k
+tasks:
+  - alias: gp
+    cmd: kubectl
+    args:
+      - get
+      - pods
+  - alias: gs
+    cmd: kubectl
+    args:
+      - get
+      - svc
+taskLists:
+  - alias: ps
+    taskAliases:
+      - gp
+      - gs
+```
+
+## Table of contents
 
 - [xec a simple command executor](#xec-a-simple-command-executor)
+  - [Table of contents](#table-of-contents)
   - [Installation](#installation)
+    - [Pre-built binaries](#pre-built-binaries)
+      - [Linux and Darwin](#linux-and-darwin)
+      - [Verification](#verification)
+    - [Go](#go)
+    - [Container](#container)
   - [Usage](#usage)
   - [Defaults](#defaults)
   - [Dependencies](#dependencies)
   - [Initial configuration](#initial-configuration)
-  - [Examples](#examples)
+- [Examples](#examples)
   - [Anatomy of a task](#anatomy-of-a-task)
   - [Error handling of tasks](#error-handling-of-tasks)
   - [Writing configuration files (schema)](#writing-configuration-files-schema)
@@ -70,7 +109,6 @@ sha256sum xec.tar.gz
 # Compare the checksum from the file
 ```
 
-
 ### Go
 
 ```bash
@@ -79,9 +117,9 @@ go install github.com/leventogut/xec
 
 ### Container
 
-You can also copy the executable from the container image repository. 
+You can also copy the executable from the container image repository.
 
-```Dockerfile 
+```Dockerfile
 FROM alpine:latest
 COPY --from=docker.io/leventogut/xec:latest /xec /xec
 ```
@@ -158,9 +196,10 @@ xec uses [Cobra](https://github.com/spf13/cobra) for it's command generation.
 An initial, skeleton configuration can be created via:
 
 ```bash
-❯ xec init                                                                                                                                                                              xec on  main [✘!?] via 🐳 desktop-linux via 🐹 v1.20.4 with unknown env 
+❯ xec init
 2024-02-10T21:33:54+01:00 | [SUCCESS] | Init configuration is written to file .xec.yaml.
 ```
+
 # Examples
 
 | Feature               | Documentation                                                    | Code                                                                         |
