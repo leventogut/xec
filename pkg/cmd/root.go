@@ -2,9 +2,7 @@ package cmd
 
 import (
 	"errors"
-	"flag"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -28,7 +26,7 @@ const (
 )
 
 var (
-	// o                 = output.GetInstance()
+	lo                = output.GetInstance()
 	Configs           []*xec.Config
 	ConfigFileFlag    string = ""    // Custom configuration file.
 	Verbose           bool   = true  // Verbose defines the verbosity as a boolean.
@@ -81,13 +79,12 @@ func Execute() {
 			o.SetDebugFlag(Debug)
 		}
 
-		if !C.Quiet {
+		if C.Quiet {
 			o.SetQuietFlag(C.Quiet)
 		} else {
 			o.SetQuietFlag(Quiet)
 		}
-
-		if !C.NoColor {
+		if C.NoColor {
 			o.SetNoColorFlag(C.NoColor)
 		} else {
 			o.SetNoColorFlag(NoColor)
@@ -182,6 +179,7 @@ func Execute() {
 			} else {
 				commandToAdd = rootCmd
 			}
+
 			// Add task aliases (sub-commands)
 			commandToAdd.AddCommand(&cobra.Command{
 				Use:   t.Alias,
@@ -192,6 +190,7 @@ func Execute() {
 					if t.LogFile != "" {
 						o.SetLogFileFlag(t.LogFile)
 					}
+					t.ExtraArgs = args
 				},
 				Run: func(cmd *cobra.Command, args []string) {
 					executeTask := func() {
@@ -326,8 +325,9 @@ func Execute() {
 }
 
 func init() {
+
 	// Global flags:
-	rootCmd.PersistentFlags().StringVarP(&ConfigFileFlag, "config", "", "", "config file to read (default is ~/.xec.yaml,  $PWD/.xec.yaml)")
+	rootCmd.PersistentFlags().StringVarP(&ConfigFileFlag, "config", "", "", "additional config file to read (default ~/.xec.yaml,  $PWD/.xec.yaml is read)")
 	rootCmd.PersistentFlags().BoolVarP(&NoColor, "no-color", "", false, "Disable color output.")
 	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "", false, "Verbose level output.")
 	rootCmd.PersistentFlags().BoolVarP(&Debug, "debug", "", false, "Debug level output.")
@@ -336,18 +336,24 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&LogDir, "log-dir", "", "", "Directory to use for logging.")
 	rootCmd.PersistentFlags().BoolVarP(&IgnoreErrorFlag, "ignore-error", "", false, "Ignore errors on tasks.")
 
-	// Flag package is used due to the fact that Cobra loads flag values quite late.
-	// Only reading values and updating global vars is used.
-	flag.StringVar(&ConfigFileFlag, "config", "", "")
-	flag.BoolVar(&NoColor, "no-color", false, "")
-	flag.BoolVar(&Verbose, "verbose", false, "")
-	flag.BoolVar(&Debug, "debug", false, "")
-	flag.BoolVar(&Quiet, "quiet", false, "")
-	flag.StringVar(&LogFile, "log-file", "", "")
-	flag.StringVar(&LogDir, "log-dir", "", "")
-	flag.BoolVar(&IgnoreErrorFlag, "ignore-error", false, "")
+	rootCmd.ParseFlags(os.Args)
 
 	_ = viper.BindPFlags(rootCmd.PersistentFlags())
+
+	if Debug {
+		Verbose = false
+	}
+
+	if Quiet {
+		Debug = false
+		Verbose = false
+	}
+	fmt.Printf("quiet: %+v\n", Quiet)
+	fmt.Printf("verbose: %+v\n", Verbose)
+	// Logging configuration
+	lo.SetVerboseFlag(Verbose)
+	lo.SetDebugFlag(Debug)
+	lo.SetQuietFlag(Quiet)
 
 	rootCmd.AddCommand(&cobra.Command{
 		Use:   "init",
@@ -357,18 +363,10 @@ func init() {
 			initConfigFile("./" + DefaultConfigFileNameWithoutExtension + "." + DefaultConfigExtension)
 		},
 	})
-
 	initConfig()
-
-	if Debug {
-		Verbose = true
-	}
 }
 
 func initConfig() {
-	// Parse flags
-	flag.Parse()
-
 	if ConfigFileFlag != "" {
 		extension := strings.TrimPrefix(filepath.Ext(ConfigFileFlag), ".")
 		configName := strings.TrimSuffix(filepath.Base(ConfigFileFlag), filepath.Ext(ConfigFileFlag))
@@ -381,11 +379,11 @@ func initConfig() {
 	// current working directory
 	CreateViperInstanceFromConfig(".", DefaultConfigFileNameWithoutExtension, DefaultConfigExtension)
 
-	// if len(Configs) < 1 {
-	// 	o.Warning("No configuration file found.")
+	if len(Configs) < 1 {
+		lo.Error("No configuration file found.")
 
-	// 	o.Warning("You can generate a skeleton configuration via: %s init", AppName)
-	// }
+		lo.Success("You can generate a skeleton configuration via: %s init", AppName)
+	}
 }
 
 func CreateViperInstanceFromConfig(path string, configName string, extension string) {
@@ -399,23 +397,25 @@ func CreateViperInstanceFromConfig(path string, configName string, extension str
 	viperInstance.SetConfigType(extension)  // REQUIRED if the config file does not have the extension in the name
 	viperInstance.AddConfigPath(path)       // look for config in the working directory
 
-	// o.Debug("Trying to read config file, [%v/%v.%v].", path, configName, extension)
+	lo.Debug("Trying to read config file, [%v/%v.%v].", path, configName, extension)
 
 	err = viperInstance.ReadInConfig() // Find and read the config file
 	if err != nil {                    // Handle errors reading the config file
-		// o.Warning("Can't read config file, [%v/%v.%v], skipping", path, configName, extension)
+		lo.Warning("Can't read config file, [%v/%v.%v], skipping", path, configName, extension)
 		return
 	}
 
-	// o.Success("Loaded config file, [%v/%v.%v]", path, configName, extension)
+	lo.Info("Loaded config file, [%v/%v.%v]", path, configName, extension)
 
 	var config *xec.Config
 
 	err = viperInstance.Unmarshal(&config)
+	if err != nil {
+		lo.Error("Can't decode config, error: %v", err)
+	}
 	Configs = append(Configs, config)
 
-	// Root variables form config
-
+	// Root variables from config
 	if config.LogDir != "" {
 		LogDir = strings.TrimSuffix(config.LogDir, "/") + "/"
 	}
@@ -425,24 +425,22 @@ func CreateViperInstanceFromConfig(path string, configName string, extension str
 		importConfigPath := filepath.Dir(importConfig)
 		CreateViperInstanceFromConfig(importConfigPath, importConfigConfigName, importConfigExtension)
 	}
-	if err != nil {
-		log.Fatalf("Can't decode config, error: %v", err)
-	}
+
 }
 
 // initConfigFile checks the given path for configuration file.
-// If the file doesn't exist, creates it.
+// If the file doesn't exist, create it.
 func initConfigFile(fileName string) {
 	if _, err := os.Stat(fileName); errors.Is(err, os.ErrNotExist) {
-		// o.Info("Configuration file [%+v] not found.\n", fileName)
+		lo.Info("Configuration file [%+v] not found.\n", fileName)
 		configFile, err := os.OpenFile(fileName, os.O_RDWR|os.O_CREATE, 0644)
 		if err != nil {
-			// o.Fatal("Can't open configuration file: %v, error:  %v\n", fileName, err)
+			lo.Fatal("Can't open configuration file: %v, error:  %v\n", fileName, err)
 		}
 		_, err = configFile.WriteString(InitConfiguration)
 		if err != nil {
-			// o.Fatal("Can't write to file, error:  %v\n", err)
+			lo.Fatal("Can't write to file, error:  %v\n", err)
 		}
-		// o.Success("Init configuration is written to file %v.", fileName)
+		lo.Success("Init configuration is written to file %v.", fileName)
 	}
 }
