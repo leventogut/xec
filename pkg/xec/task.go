@@ -61,18 +61,11 @@ func Execute(taskPointerAddress **Task) {
 		logFile, _ = os.OpenFile(os.DevNull, os.O_WRONLY, 0)
 	}
 
-	if t.Output.QuietFlag() {
-		t.Status.ExecCmd.Stdout = io.MultiWriter(logFile)
-		t.Status.ExecCmd.Stderr = io.MultiWriter(logFile)
-
-	} else {
-		t.Status.ExecCmd.Stdout = io.MultiWriter(logFile, os.Stdout)
-		t.Status.ExecCmd.Stderr = io.MultiWriter(logFile, os.Stderr)
-
-	}
+	t.Status.ExecCmd.Stdout = io.MultiWriter(logFile, os.Stdout)
+	t.Status.ExecCmd.Stderr = io.MultiWriter(logFile, os.Stderr)
 
 	t.Output.Info("Task %+v is starting.", t.Alias)
-	t.Output.Normal("> %+v %+v", t.Cmd, strings.Join(t.Args[:], " "))
+	t.Output.Normal("> %+v %+v %+v", t.Cmd, strings.Join(t.Args[:], " "), strings.Join(t.ExtraArgs[:], " "))
 
 	if t.LogFile != "" {
 		t.Output.Info("Task %+v is logged to %+v", t.Alias, t.LogFile)
