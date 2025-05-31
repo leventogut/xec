@@ -3,15 +3,16 @@
 #imports:
 #  - examples/restart-on-failure.xec.yaml
 #  - examples/parallel.xec.yaml
-verbose: true
-debug: true
+verbose: false
+debug: false
+dev: true
 logDir: ./log
 logFile: "auto" # "xec.log"
 restartLimit: 100
 taskDefaults:
   environment:
     passOn: true
-#  logFile: "xec-taskDefaults.log"
+  #  logFile: "xec-taskDefaults.log"
   ignoreError: false
 tasks:
   - alias: build
@@ -21,6 +22,12 @@ tasks:
       - release
       - --snapshot
       - --clean
+  - alias: run
+    description: go run xec.
+    cmd: go
+    args:
+      - run
+      - main.go
   - alias: echo_5
     cmd: echo
     args:
@@ -29,7 +36,7 @@ tasks:
     cmd: sleep
     args:
       - "1"
-    restartOnSuccess: true
+    restartOnSuccess: false
   #    logFile: "xec-task.log"
   - alias: wait_3
     cmd: sleep
@@ -39,15 +46,20 @@ tasks:
     cmd: sleep
     args:
       - "60"
+  - alias: ls
+    cmd: ls
+    args:
+      - "-al"
+    restartOnFailure: false
   - alias: lsz
     cmd: ls
     args:
       - "-alz"
-    restartOnFailure: true
+    restartOnFailure: false
 taskLists:
   - alias: wait
     parallel: false
     taskAliases:
       - wait_1
       - wait_3
-#    logFile: "parallel.log"
+    logFile: "parallel.log"

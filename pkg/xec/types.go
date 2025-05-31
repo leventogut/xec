@@ -11,6 +11,7 @@ import (
 type Config struct {
 	Verbose      bool         `yaml:"verbose" json:"verbose"`
 	Debug        bool         `yaml:"debug" json:"debug"`
+	Dev          bool         `yaml:"dev" json:"dev"`
 	NoColor      bool         `yaml:"no-color" json:"no-color"`
 	Quiet        bool         `yaml:"quiet" json:"quiet"`
 	LogFile      string       `yaml:"logFile" json:"logFile"`

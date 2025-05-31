@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -14,8 +13,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-
-	"github.com/charmbracelet/huh/spinner"
 )
 
 const (
@@ -36,21 +33,24 @@ var (
 	LogDir            string = ""    // LogDir is the destination directory for log files.
 	LogFile           string = ""    // Log file name
 	IgnoreErrorFlag   bool   = false // Continue even if the task errors
-	Timeout           int    = 600   // Timeout for tasks' execution context.
+	DevFlag           bool   = false
+	Timeout           int    = 600 // Timeout for tasks' execution context.
 	InitConfiguration string = `# yaml-language-server: $schema=https://raw.githubusercontent.com/leventogut/xec/main/schema/xec-yaml-schema.json
 tasks:
   - alias: myCommand
     cmd: echo
     args:
       - "my command is run"
-    description: run it via xec myCommand
+    description: run it via "xec myCommand"
 `
 )
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "xec <flags> <alias> -- [additional-args]",
-	Short: "Simple command executor.",
+	Use:     "xec <flags> <alias> -- [command-args]",
+	Short:   "Simple command executor.",
+	Version: "v0.0.17",
+
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
 			_ = cmd.Help()
@@ -196,11 +196,7 @@ func Execute() {
 					executeTask := func() {
 						xec.Execute(&t)
 					}
-					_ = spinner.New().
-						Title("Task " + t.Alias + " is running.").
-						Type(spinner.Dots).
-						Action(executeTask).
-						Run()
+					executeTask()
 				},
 			})
 		}
@@ -303,11 +299,7 @@ func Execute() {
 							executeTask := func() {
 								xec.Execute(&taskListTask)
 							}
-							_ = spinner.New().
-								Title("Task " + taskListTask.Alias + " is running.").
-								Type(spinner.Dots).
-								Action(executeTask).
-								Run()
+							executeTask()
 						}
 					}
 					taskListFinishTime := time.Now()
@@ -319,7 +311,6 @@ func Execute() {
 	}
 	err = rootCmd.Execute()
 	if err != nil {
-		fmt.Println(err)
 		os.Exit(1)
 	}
 }
@@ -336,20 +327,15 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&LogDir, "log-dir", "", "", "Directory to use for logging.")
 	rootCmd.PersistentFlags().BoolVarP(&IgnoreErrorFlag, "ignore-error", "", false, "Ignore errors on tasks.")
 
-	rootCmd.ParseFlags(os.Args)
+	_ = rootCmd.ParseFlags(os.Args)
 
 	_ = viper.BindPFlags(rootCmd.PersistentFlags())
-
-	if Debug {
-		Verbose = false
-	}
 
 	if Quiet {
 		Debug = false
 		Verbose = false
 	}
-	fmt.Printf("quiet: %+v\n", Quiet)
-	fmt.Printf("verbose: %+v\n", Verbose)
+
 	// Logging configuration
 	lo.SetVerboseFlag(Verbose)
 	lo.SetDebugFlag(Debug)

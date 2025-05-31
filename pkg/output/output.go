@@ -11,19 +11,6 @@ import (
 	"github.com/fatih/color"
 )
 
-//	type Output interface {
-//		NoColorFlag() bool
-//		SetNoColorFlag(b bool)
-//		LogFile() string
-//		SetLogFile(f string)
-//		QuietFlag() bool
-//		SetQuietFlag(b bool)
-//		DebugFlag() bool
-//		SetDebugFlag(b bool)
-//		VerboseFlag() bool
-//		SetVerboseFlag(b bool)
-//		Output()
-//	}
 type Output struct {
 	noColor bool
 	logFile string
@@ -161,7 +148,9 @@ func (o *Output) WriteOutput(message string, outputType string, values ...interf
 
 	w := false
 	if !o.quiet {
-		if outputType == "error" || outputType == "fatal" {
+		if outputType == "fatal" {
+			w = true
+		} else if outputType == "error" && o.verbose {
 			w = true
 		} else if o.debug {
 			w = true
@@ -169,7 +158,7 @@ func (o *Output) WriteOutput(message string, outputType string, values ...interf
 			w = true
 		} else if outputType == "warning" && o.verbose {
 			w = true
-		} else if outputType == "success" {
+		} else if outputType == "success" && o.verbose {
 			w = true
 		} else if outputType == "normal" {
 			w = true

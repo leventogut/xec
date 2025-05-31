@@ -14,7 +14,6 @@ import (
 
 var (
 	DefaultTimeout = 600
-	// o              = output.GetInstance()
 )
 
 func ExecuteWithWaitGroups(wg *sync.WaitGroup, taskPointerAddress **Task) {
@@ -86,7 +85,8 @@ func Execute(taskPointerAddress **Task) {
 		syscall.SIGHUP,
 		syscall.SIGINT,
 		syscall.SIGTERM,
-		syscall.SIGQUIT)
+		syscall.SIGQUIT, os.Interrupt)
+
 	go func() {
 		for {
 			receivedSignal := <-signalChannel
@@ -147,7 +147,6 @@ func (t *Task) SetEnvironment() []string {
 		// Traverse the environment values we have and apply the accept filters.
 		for _, envKeyValue := range os.Environ() {
 			if t.Environment.AcceptFilterRegex != nil {
-				// l.Debug("AcceptFilterRegex is set")
 				for _, regex := range t.Environment.AcceptFilterRegex {
 					if CheckRegex(envKeyValue, regex) {
 						environmentValuesAfterAcceptFilter = append(environmentValuesAfterAcceptFilter, envKeyValue)
