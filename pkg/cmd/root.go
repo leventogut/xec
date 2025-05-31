@@ -149,6 +149,10 @@ func Execute() {
 				t.LogFile = LogDir + t.LogFile
 			}
 
+			cmdSlice := strings.Fields(t.Cmd)
+			t.Cmd = cmdSlice[0]
+			t.Args = cmdSlice[1:]
+
 			// Check if namespace is configured, set it up if it is.
 			var commandToAdd *cobra.Command
 			if C.Namespace != "" {
